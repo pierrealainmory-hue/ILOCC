@@ -691,12 +691,21 @@
         }
 
         // --- PASSWORD PROTECTION ---
+        // Vérification au chargement de la page
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('ilocc_auth_success') === 'true') {
+                document.getElementById('login-overlay').style.display = 'none';
+            }
+        });
+
         function checkPassword() {
             const password = document.getElementById('password-input').value;
             const errorMsg = document.getElementById('login-error');
             
             // Mot de passe : ILOCC2026
             if(password === "ILOCC2026") {
+                // Enregistrement de la connexion réussie dans le navigateur
+                localStorage.setItem('ilocc_auth_success', 'true');
                 document.getElementById('login-overlay').style.display = 'none';
             } else {
                 errorMsg.style.display = 'block';
