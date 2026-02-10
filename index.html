@@ -341,10 +341,10 @@
 
         <nav class="flex h-full">
             <button onclick="switchTab('acteurs')" id="nav-acteurs" class="nav-tab active h-full px-6 flex items-center gap-2 font-oswald uppercase tracking-wider text-sm">
-                <i data-lucide="users" class="w-4 h-4"></i> Atelier
+                <i data-lucide="users" class="w-4 h-4"></i> Acteurs
             </button>
             <button onclick="switchTab('matrice')" id="nav-matrice" class="nav-tab h-full px-6 flex items-center gap-2 font-oswald uppercase tracking-wider text-sm">
-                <i data-lucide="table" class="w-4 h-4"></i> Fonction
+                <i data-lucide="table" class="w-4 h-4"></i> Matrice
             </button>
             <button onclick="switchTab('filiere')" id="nav-filiere" class="nav-tab h-full px-6 flex items-center gap-2 font-oswald uppercase tracking-wider text-sm">
                 <i data-lucide="git-merge" class="w-4 h-4"></i> Filière
@@ -497,48 +497,48 @@
                     <!-- Row 2: Filière Ovine -->
                     <div class="row-header header-ovine" style="grid-row: 2; grid-column: 1;">Filière Ovine</div>
                     <div class="amont-block flex flex-col gap-2" style="grid-row: 2; grid-column: 2;">
-                        <div onclick="selectAndGo(7)" class="node-base"><div class="actor-icon-strip">🐑</div><span class="font-bold text-[15px] uppercase font-oswald">OS CORSE</span><p class="key-term text-[13px]">Sélection race</p></div>
-                        <div onclick="selectAndGo(8)" class="node-base"><div class="actor-icon-strip">🐑</div><span class="font-bold text-[15px] uppercase text-center leading-tight font-oswald">CORSIA</span><p class="key-term text-[13px] text-center">IA & Béliers</p></div>
+                        <div onclick="selectAndGo(7)" class="node-base"><div class="actor-icon-strip">🐑</div><span class="font-bold text-[14px] uppercase font-oswald text-center leading-tight">OS CORSE</span><p class="key-term text-[11px] text-center leading-tight">Sélection race</p></div>
+                        <div onclick="selectAndGo(8)" class="node-base"><div class="actor-icon-strip">🐑</div><span class="font-bold text-[14px] uppercase text-center leading-tight font-oswald">CORSIA</span><p class="key-term text-[11px] text-center leading-tight">IA & Béliers</p></div>
                     </div>
                     <div style="grid-row: 2; grid-column: 3;"></div>
                     <div class="aval-block flex items-center" style="grid-row: 2; grid-column: 4;">
-                        <div onclick="selectAndGo(3)" class="node-base w-full border-red-100 is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩<br>🐑</div><span class="font-bold text-[15px] uppercase font-oswald">SCA AGNELLU</span><p class="key-term text-red-800 text-center text-[13px]">Abattage & Valo</p></div>
+                        <div onclick="selectAndGo(3)" class="node-base w-full border-red-100 is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩<br>🐑</div><span class="font-bold text-[14px] uppercase font-oswald text-center leading-tight">SCA AGNELLU</span><p class="key-term text-red-800 text-center text-[11px] leading-tight">Abattage & Valo</p></div>
                     </div>
-                    <div class="aval-block flex items-center" style="grid-row: 2; grid-column: 5;">
+                    <div class="aval-block flex flex-col gap-2" style="grid-row: 2; grid-column: 5;">
                         <!-- ODG BROCCIU removed here -->
-                        <div onclick="selectAndGo(4)" class="node-base w-full border-blue-300 is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩</div><span class="font-bold text-[14px] uppercase leading-tight font-oswald">AREO</span><p class="key-term text-center leading-tight text-left text-[13px]">IGP Agneau</p></div>
+                        <div onclick="selectAndGo(4)" class="node-base border-blue-300 is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩</div><span class="font-bold text-[14px] uppercase leading-tight font-oswald text-center">AREO</span><p class="key-term text-center leading-tight text-[11px]">IGP Agneau</p></div>
                     </div>
                     <div class="aval-block flex items-center" style="grid-row: 2; grid-column: 6;">
-                        <div onclick="selectAndGo(4)" class="node-base w-full border-blue-300 text-center is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩</div><span class="font-bold text-[15px] uppercase font-oswald">AREO</span><p class="key-term text-center text-left text-[13px]">Mise en marché</p></div>
+                        <div onclick="selectAndGo(4)" class="node-base w-full border-blue-300 text-center is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩</div><span class="font-bold text-[14px] uppercase font-oswald text-center leading-tight">AREO</span><p class="key-term text-center text-left text-[11px] leading-tight">Mise en marché</p></div>
                     </div>
     
                     <!-- Row 3: Zone Transversale -->
                     <div class="header-pivot">TRANSVERSAL</div>
                     <div class="amont-block flex items-center" style="grid-row: 3; grid-column: 3;">
-                        <div onclick="selectAndGo(10)" class="node-base w-full border-red-200 shadow-sm"><div class="actor-icon-strip">🛡️</div><span class="font-bold text-[15px] uppercase text-red-900 leading-tight font-oswald">GDS</span><p class="key-term font-bold text-red-700 text-center text-[13px]">Expertise Sanitaire</p></div>
+                        <div onclick="selectAndGo(10)" class="node-base w-full border-red-200 shadow-sm"><div class="actor-icon-strip">🛡️</div><span class="font-bold text-[14px] uppercase text-red-900 leading-tight font-oswald text-center">GDS</span><p class="key-term font-bold text-red-700 text-center text-[11px] leading-tight">Expertise Sanitaire</p></div>
                     </div>
                     <div class="aval-block flex items-center" style="grid-row: 3; grid-column: 4;">
-                        <div onclick="selectAndGo(6)" class="node-base w-full border-amber-300 bg-amber-50/30"><div class="actor-icon-strip">🧀<br>🥛</div><span class="font-bold text-[14px] uppercase text-amber-900 font-oswald">CASGIU CASANU</span><p class="key-term text-[13px] text-center">Transfo. Fermière</p></div>
+                        <div onclick="selectAndGo(6)" class="node-base w-full border-amber-300 bg-amber-50/30"><div class="actor-icon-strip">🧀<br>🥛</div><span class="font-bold text-[14px] uppercase text-amber-900 font-oswald text-center leading-tight">CASGIU CASANU</span><p class="key-term text-[11px] text-center leading-tight">Transfo. Fermière</p></div>
                     </div>
                     <div class="aval-block flex items-center" style="grid-row: 3; grid-column: 5;">
-                        <div onclick="selectAndGo(12)" class="node-base w-full border-blue-400 bg-blue-50/20 shadow-md"><div class="actor-icon-strip">🧀<br>🐑<br>🐐</div><span class="font-bold text-[15px] uppercase text-blue-900 leading-tight font-oswald">ODG BROCCIU</span><p class="key-term text-blue-700 font-bold text-center text-[13px]">Garant AOP</p></div>
+                        <div onclick="selectAndGo(12)" class="node-base w-full border-blue-400 bg-blue-50/20 shadow-md"><div class="actor-icon-strip">🧀<br>🐑<br>🐐</div><span class="font-bold text-[14px] uppercase text-blue-900 leading-tight font-oswald text-center">ODG BROCCIU</span><p class="key-term text-blue-700 font-bold text-center text-[11px] leading-tight">Garant AOP</p></div>
                     </div>
                     <div class="aval-block flex items-center" style="grid-row: 3; grid-column: 6;">
-                        <div onclick="selectAndGo(6)" class="node-base w-full border-amber-300 bg-amber-50/30"><div class="actor-icon-strip">🧀<br>🥛</div><span class="font-bold text-[14px] uppercase text-amber-900 font-oswald">CASGIU CASANU</span><p class="key-term text-[13px] text-center">Promotion fermière</p></div>
+                        <div onclick="selectAndGo(6)" class="node-base w-full border-amber-300 bg-amber-50/30"><div class="actor-icon-strip">🧀<br>🥛</div><span class="font-bold text-[14px] uppercase text-amber-900 font-oswald text-center leading-tight">CASGIU CASANU</span><p class="key-term text-[11px] text-center leading-tight">Promotion fermière</p></div>
                     </div>
     
                     <!-- Row 4: Filière Caprine -->
                     <div class="row-header header-caprine" style="grid-row: 4; grid-column: 1;">Filière Caprine</div>
                     <div class="amont-block flex items-center" style="grid-row: 4; grid-column: 2;">
-                        <div onclick="selectAndGo(9)" class="node-base w-full text-center is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🐐</div><span class="font-bold text-[15px] uppercase font-oswald">ASSOC. CAPRAGHJI</span><p class="key-term text-center text-[13px]">Schéma sélection</p></div>
+                        <div onclick="selectAndGo(9)" class="node-base w-full text-center is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🐐</div><span class="font-bold text-[14px] uppercase font-oswald text-center leading-tight">ASSOC. CAPRAGHJI</span><p class="key-term text-center text-[11px] leading-tight">Schéma sélection</p></div>
                     </div>
                     <div style="grid-row: 4; grid-column: 3;"></div>
                     <div style="grid-row: 4; grid-column: 4;"></div>
                     <div class="aval-block flex items-center" style="grid-row: 4; grid-column: 5;">
-                        <div onclick="selectAndGo(9)" class="node-base w-full border-blue-300 is-interpro-member text-center"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩</div><span class="font-bold text-[15px] uppercase font-oswald">ASSOC. CAPRAGHJI</span><p class="key-term text-center text-[13px]">IGP Cabri</p></div>
+                        <div onclick="selectAndGo(9)" class="node-base w-full border-blue-300 is-interpro-member text-center"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩</div><span class="font-bold text-[14px] uppercase font-oswald text-center leading-tight">ASSOC. CAPRAGHJI</span><p class="key-term text-center text-[11px] leading-tight">IGP Cabri</p></div>
                     </div>
                     <div class="aval-block flex items-center" style="grid-row: 4; grid-column: 6;">
-                        <div onclick="selectAndGo(9)" class="node-base w-full border-blue-300 text-center is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🐐</div><span class="font-bold text-[15px] uppercase font-black text-blue-900 font-oswald">ASSOC. CAPRAGHJI</span><p class="key-term text-blue-700 text-center text-[13px]">Promotion</p></div>
+                        <div onclick="selectAndGo(9)" class="node-base w-full border-blue-300 text-center is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🐐</div><span class="font-bold text-[14px] uppercase font-black text-blue-900 font-oswald text-center leading-tight">ASSOC. CAPRAGHJI</span><p class="key-term text-blue-700 text-center text-[11px] leading-tight">Promotion</p></div>
                     </div>
                 </div>
     
@@ -548,17 +548,17 @@
                     <div>
                         <span class="font-oswald uppercase text-sm tracking-widest text-amber-700 mb-4 block">Représentation & Défense</span>
                         <div class="flex flex-wrap gap-3">
-                            <div onclick="selectAndGo(2)" class="node-base w-48 bg-gray-50/50 min-h-0 py-2 is-interpro-member"><span class="member-indicator">★</span><span class="font-bold text-[13px] uppercase font-oswald">GPC</span><p class="key-term text-[11px]">Revenu des éleveurs</p></div>
-                            <div onclick="selectAndGo(5)" class="node-base w-48 bg-gray-50/50 min-h-0 py-2 is-interpro-member"><span class="member-indicator">★</span><span class="font-bold text-[13px] uppercase font-oswald">U CASGILE</span><p class="key-term text-[11px]">Défense OCC</p></div>
-                            <div onclick="selectAndGo(11)" class="node-base w-48 bg-amber-50/50 min-h-0 py-2 border-amber-200 is-interpro-member"><span class="member-indicator">★</span><span class="font-bold text-[12px] uppercase leading-tight font-oswald">ASSOC. TRANSFORMATEURS</span><p class="key-term text-[10px]">Défense industrielle</p></div>
+                            <div onclick="selectAndGo(2)" class="node-base w-48 bg-gray-50/50 min-h-0 py-2 is-interpro-member"><span class="member-indicator">★</span><span class="font-bold text-[13px] uppercase font-oswald text-center leading-tight">GPC</span><p class="key-term text-[11px] text-center leading-tight">Revenu des éleveurs</p></div>
+                            <div onclick="selectAndGo(5)" class="node-base w-48 bg-gray-50/50 min-h-0 py-2 is-interpro-member"><span class="member-indicator">★</span><span class="font-bold text-[13px] uppercase font-oswald text-center leading-tight">U CASGILE</span><p class="key-term text-[11px] text-center leading-tight">Défense OCC</p></div>
+                            <div onclick="selectAndGo(11)" class="node-base w-48 bg-amber-50/50 min-h-0 py-2 border-amber-200 is-interpro-member"><span class="member-indicator">★</span><span class="font-bold text-[13px] uppercase leading-tight font-oswald text-center">ASSOC. TRANSFORMATEURS</span><p class="key-term text-[11px] text-center leading-tight">Défense industrielle</p></div>
                         </div>
                     </div>
                     <div>
                         <span class="font-oswald uppercase text-sm tracking-widest text-purple-700 mb-4 block">Support, Financement & Institutionnel</span>
                         <div class="flex flex-wrap gap-3">
-                            <div onclick="selectAndGo(14)" class="node-base w-48 border-purple-200 min-h-0 py-2 text-center"><span class="font-bold text-[15px] uppercase font-oswald">ODARC</span><p class="key-term text-[13px]">Financement & PAC</p></div>
-                            <div onclick="selectAndGo(13)" class="node-base w-48 border-purple-200 min-h-0 py-2 text-center"><span class="font-bold text-[15px] uppercase leading-tight font-oswald">CHAMBRE D'AGRICULTURE</span><p class="key-term text-[13px]">Accompagnement terrain</p></div>
-                            <div onclick="selectAndGo(15)" class="node-base w-48 border-purple-200 min-h-0 py-2 text-center"><span class="font-bold text-[15px] uppercase font-oswald">FRANCEAGRIMER</span><p class="key-term text-[13px]">Tutelle de l'État</p></div>
+                            <div onclick="selectAndGo(14)" class="node-base w-48 border-purple-200 min-h-0 py-2 text-center"><span class="font-bold text-[13px] uppercase font-oswald text-center leading-tight">ODARC</span><p class="key-term text-[11px] text-center leading-tight">Financement & PAC</p></div>
+                            <div onclick="selectAndGo(13)" class="node-base w-48 border-purple-200 min-h-0 py-2 text-center"><span class="font-bold text-[13px] uppercase leading-tight font-oswald text-center">CHAMBRE D'AGRICULTURE</span><p class="key-term text-[11px] text-center leading-tight">Accompagnement terrain</p></div>
+                            <div onclick="selectAndGo(15)" class="node-base w-48 border-purple-200 min-h-0 py-2 text-center"><span class="font-bold text-[13px] uppercase font-oswald text-center leading-tight">FRANCEAGRIMER</span><p class="key-term text-[11px] text-center leading-tight">Tutelle de l'État</p></div>
                         </div>
                     </div>
                 </div>
