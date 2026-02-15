@@ -300,6 +300,115 @@
             margin-top: 10px;
             display: none;
         }
+
+        /* --- KANBAN / ROADMAP STYLES --- */
+        .roadmap-container {
+            display: flex;
+            overflow-x: auto;
+            height: 100%;
+            padding-bottom: 20px;
+            gap: 16px;
+        }
+        
+        .roadmap-col {
+            min-width: 320px; /* Slightly wider */
+            width: 320px;
+            background-color: #f3f3f3;
+            border-radius: 6px;
+            border: 1px solid rgba(64, 95, 89, 0.1);
+            display: flex;
+            flex-direction: column;
+            max-height: 100%;
+        }
+        
+        .roadmap-header {
+            padding: 12px 16px;
+            background-color: var(--dix-dark);
+            color: white;
+            border-radius: 6px 6px 0 0;
+            font-family: 'Oswald', sans-serif;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .roadmap-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .roadmap-card {
+            background: white;
+            padding: 16px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--dix-light); /* Changed to top border */
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .roadmap-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Action Item Style inside Objective Card */
+        .action-item-mini {
+            display: flex;
+            align-items: start;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: #4b5563;
+            background-color: #f9fafb;
+            padding: 6px;
+            border-radius: 4px;
+            margin-top: 4px;
+            border-left: 2px solid #eab308;
+        }
+        
+        .add-card-btn {
+            margin: 12px;
+            padding: 10px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 4px;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: 'Oswald', sans-serif;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            background: rgba(255,255,255,0.5);
+        }
+        
+        .add-card-btn:hover {
+            background-color: white;
+            border-color: var(--dix-light);
+            color: var(--dix-light);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 100;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(2px);
+        }
+        .modal-content {
+            background: white; width: 90%; max-width: 600px;
+            border-radius: 6px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            overflow: hidden; animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -356,6 +465,10 @@
             <button onclick="switchTab('vision')" id="nav-vision" class="nav-tab h-full px-6 flex items-center gap-2 font-oswald uppercase tracking-wider text-sm">
                 <i data-lucide="eye" class="w-4 h-4"></i> Vision
             </button>
+            <!-- NOUVEL ONGLET ROADMAP -->
+            <button onclick="switchTab('roadmap')" id="nav-roadmap" class="nav-tab h-full px-6 flex items-center gap-2 font-oswald uppercase tracking-wider text-sm">
+                <i data-lucide="kanban" class="w-4 h-4"></i> Feuille de Route
+            </button>
         </nav>
 
         <div class="w-32 flex justify-end">
@@ -364,6 +477,95 @@
             </button>
         </div>
     </header>
+
+    <!-- MODAL ADD OBJECTIVE (ROADMAP) -->
+    <div id="roadmap-modal" class="modal-overlay">
+        <div class="modal-content flex flex-col">
+            <div class="p-4 border-b border-[#549e39] bg-[#f3f3f3] flex justify-between items-center">
+                <h3 class="font-oswald uppercase text-lg text-dix-dark">Définir un Objectif</h3>
+                <button onclick="document.getElementById('roadmap-modal').style.display='none'" class="text-dix-dark hover:text-red-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 bg-white space-y-4">
+                <input type="hidden" id="modal-axis-id">
+                <div>
+                    <label class="block text-xs font-oswald uppercase text-gray-500 mb-1">Axe Stratégique</label>
+                    <input type="text" id="modal-axis-name" disabled class="w-full p-2 bg-gray-100 border border-gray-200 rounded text-sm text-dix-dark font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-oswald uppercase text-gray-500 mb-1">Intitulé de l'objectif</label>
+                    <input type="text" id="modal-title" class="w-full p-2 border border-gray-300 rounded text-sm font-georgia" placeholder="Ex: Créer un observatoire des prix...">
+                </div>
+                <div>
+                    <label class="block text-xs font-oswald uppercase text-gray-500 mb-1">Description & Indicateurs de réussite</label>
+                    <textarea id="modal-desc" rows="3" class="w-full p-2 border border-gray-300 rounded text-sm font-georgia" placeholder="Quel est le résultat attendu ?"></textarea>
+                </div>
+            </div>
+            <div class="p-4 bg-[#f3f3f3] border-t border-gray-200 flex justify-end gap-2">
+                <button onclick="document.getElementById('roadmap-modal').style.display='none'" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 font-oswald uppercase">Annuler</button>
+                <button id="btn-save-roadmap" class="px-4 py-2 bg-[#549e39] text-white rounded text-sm font-oswald uppercase hover:bg-[#468c2f]">Créer l'objectif</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETAILS & ACTIONS -->
+    <div id="details-modal" class="modal-overlay">
+        <div class="modal-content flex flex-col h-[85vh] max-w-3xl"> <!-- Taller and Wider modal -->
+            <div class="p-4 border-b border-[#549e39] bg-[#f3f3f3] flex justify-between items-center">
+                <h3 class="font-oswald uppercase text-lg text-dix-dark">Fiche Objectif</h3>
+                <button onclick="closeDetailsModal()" class="text-dix-dark hover:text-red-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6 bg-white">
+                <!-- Content injected via JS -->
+                <div id="details-content" class="space-y-6"></div>
+                
+                <!-- Actions Section -->
+                <div class="mt-8 pt-6 border-t-2 border-gray-100">
+                    <h4 class="font-oswald uppercase text-base text-dix-dark mb-4 flex items-center gap-2">
+                        <i data-lucide="list-todo" class="w-5 h-5 text-amber-600"></i>
+                        Plan d'Actions Opérationnel
+                    </h4>
+                    
+                    <div id="actions-list" class="space-y-3 mb-6">
+                        <!-- Actions injected here -->
+                    </div>
+
+                    <!-- Add Action Form -->
+                    <div class="bg-amber-50/50 p-4 rounded border border-amber-200">
+                        <p class="text-xs font-oswald text-amber-700 mb-3 uppercase tracking-wide">Ajouter une action concrète pour servir cet objectif</p>
+                        <div class="grid grid-cols-2 gap-3 mb-2">
+                            <input type="text" id="action-title" class="col-span-2 w-full p-2 border border-gray-300 rounded text-sm font-georgia" placeholder="Intitulé de l'action (ex: Embaucher un animateur)">
+                            <input type="text" id="action-means" class="w-full p-2 border border-gray-300 rounded text-sm font-georgia" placeholder="Moyens / Leviers (ex: Budget, Groupe de travail)">
+                            <input type="text" id="action-partner" class="w-full p-2 border border-gray-300 rounded text-sm font-georgia" placeholder="Partenaires associés">
+                        </div>
+                        <div class="text-right">
+                            <button id="btn-add-action" class="px-3 py-1.5 bg-amber-600 text-white text-xs font-oswald uppercase rounded hover:bg-amber-700">Ajouter l'action</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comments Section -->
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <h4 class="font-oswald uppercase text-sm text-dix-dark mb-4 flex items-center gap-2">
+                        <i data-lucide="message-square-plus" class="w-4 h-4 text-gray-400"></i>
+                        Notes & Compléments
+                    </h4>
+                    
+                    <div id="notes-list" class="space-y-3 mb-6">
+                        <!-- Notes injected here -->
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded border border-gray-200">
+                        <input type="text" id="note-author" class="w-full p-2 mb-2 border border-gray-300 rounded text-sm font-georgia" placeholder="Votre Nom / Structure">
+                        <textarea id="note-text" rows="2" class="w-full p-2 mb-2 border border-gray-300 rounded text-sm font-georgia" placeholder="Votre remarque..."></textarea>
+                        <div class="text-right">
+                            <button id="btn-add-note" class="px-3 py-1.5 bg-gray-600 text-white text-xs font-oswald uppercase rounded hover:bg-gray-700">Ajouter note</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL LEXIQUE (Global) -->
     <div id="lexicon-modal" class="fixed inset-0 z-50 bg-[#405F59] bg-opacity-50 backdrop-blur-sm hidden items-center justify-center p-4">
@@ -506,7 +708,7 @@
                     </div>
                     <div class="aval-block flex flex-col gap-2" style="grid-row: 2; grid-column: 5;">
                         <!-- ODG BROCCIU removed here -->
-                        <div onclick="selectAndGo(4)" class="node-base border-blue-300 is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩</div><span class="font-bold text-[14px] uppercase leading-tight font-oswald text-center">AREO</span><p class="key-term text-center leading-tight text-[11px]">IGP Agneau</p></div>
+                        <div onclick="selectAndGo(4)" class="node-base w-full border-blue-300 is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩</div><span class="font-bold text-[14px] uppercase leading-tight font-oswald text-center">AREO</span><p class="key-term text-center leading-tight text-[11px]">IGP Agneau</p></div>
                     </div>
                     <div class="aval-block flex items-center" style="grid-row: 2; grid-column: 6;">
                         <div onclick="selectAndGo(4)" class="node-base w-full border-blue-300 text-center is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩</div><span class="font-bold text-[14px] uppercase font-oswald text-center leading-tight">AREO</span><p class="key-term text-center text-left text-[11px] leading-tight">Mise en marché</p></div>
@@ -665,9 +867,38 @@
             </div>
         </div>
 
+        <!-- ONGLET 6: ROADMAP (KANBAN) -->
+        <div id="tab-roadmap" class="tab-pane absolute inset-0 hidden overflow-hidden p-8 bg-[#fdfbf7]">
+            <div class="flex flex-col h-full">
+                <div class="mb-4 flex-none border-l-4 border-[#549e39] pl-6 py-2 flex justify-between items-end">
+                    <div>
+                        <h2 class="font-oswald text-3xl text-dix-dark uppercase font-normal tracking-wide">Feuille de Route</h2>
+                        <p class="font-georgia text-dix-dark opacity-60 italic mt-1">Plan d'action opérationnel par axe stratégique</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        <div class="flex gap-2">
+                            <button id="btn-export-csv" class="text-xs bg-white border border-gray-300 px-2 py-1 rounded text-dix-dark hover:bg-gray-50 flex items-center gap-1 font-oswald uppercase transition-colors">
+                                <i data-lucide="file-spreadsheet" class="w-3 h-3"></i> CSV
+                            </button>
+                            <button id="btn-export-pdf" class="text-xs bg-dix-dark text-white px-2 py-1 rounded hover:bg-[#2c423e] flex items-center gap-1 font-oswald uppercase transition-colors">
+                                <i data-lucide="printer" class="w-3 h-3"></i> Imprimer / PDF
+                            </button>
+                        </div>
+                        <div class="text-[10px] text-gray-400 italic">Données synchronisées</div>
+                    </div>
+                </div>
+                
+                <div class="flex-1 min-h-0">
+                    <div class="roadmap-container" id="kanban-board">
+                        <!-- Kanban Columns injected by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- MAIN JAVASCRIPT LOGIC (Legacy) -->
     <script>
         // --- NAVIGATION LOGIC ---
         function switchTab(tabId) {
@@ -683,6 +914,7 @@
             if(tabId === 'vision') setTimeout(initChart, 50);
             if(tabId === 'matrice') renderMatrix();
             if(tabId === 'attentes') renderAttentes();
+            // Roadmap render is handled by the module script below
         }
 
         function selectAndGo(actorId) {
@@ -1374,9 +1606,6 @@
         function renderMatrix() {
             const body = document.getElementById('matrix-body');
             if(!body) return;
-            // Use matrixData but match order of data by ID or just use matrixData directly
-            // Mapping matrix data to ensure names are correct if we want
-            // But matrixData names are hardcoded in the array above, which is fine.
             body.innerHTML = matrixData.map(a => `
                 <tr>
                     <td class="font-oswald uppercase text-xs font-medium">${data.find(d=>d.id===a.id).intitule}</td>
@@ -1423,14 +1652,13 @@
             });
         }
 
-        // 4. Render Attentes (New Function)
+        // 4. Render Attentes
         function renderAttentes() {
             const keywordsContainer = document.getElementById('attentes-keywords');
             const mainContainer = document.getElementById('attentes-container');
             
             if (!keywordsContainer || !mainContainer) return;
 
-            // 1. Process Keywords (Simple word count from Expectations)
             const stopWords = ['de', 'la', 'le', 'et', 'les', 'des', 'en', 'un', 'une', 'pour', 'dans', 'sur', 'au', 'aux', 'avec', 'par', 'ce', 'se', 'que', 'qui', 'ne', 'pas', 'du', 'a', 'à', 'est', 'sont'];
             let wordCount = {};
             
@@ -1447,7 +1675,6 @@
                 }
             });
             
-            // Manual boosting of concepts based on analysis
             const concepts = [
                 { term: "COORDINATION", count: 12 },
                 { term: "GOUVERNANCE", count: 9 },
@@ -1465,7 +1692,6 @@
                 </span>
             `).join('');
 
-            // 2. Group by Category
             const categories = {};
             data.forEach(actor => {
                 const cat = actor.cat || "AUTRE";
@@ -1473,7 +1699,6 @@
                 categories[cat].push(actor);
             });
 
-            // Summary map based on CSV analysis
             const summaries = {
                 "INTERPROFESSION": "Rôle de chef de file pour la stratégie globale, la coordination et la défense des spécificités.",
                 "REPRÉSENTATION / SYNDICAT": "Défense du revenu et des intérêts économiques des éleveurs.",
@@ -1489,7 +1714,6 @@
                 "INSTITUTIONNEL / TUTELLE": "Accompagnement et structuration."
             };
 
-            // 3. Render Cards
             mainContainer.innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     ${Object.keys(categories).map(cat => `
@@ -1548,6 +1772,512 @@
         renderList();
         renderMain();
 
+    </script>
+
+    <!-- FIREBASE & KANBAN MODULE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // --- FIREBASE CONFIGURATION ---
+        // NOTE: In the Canvas environment, use global variables.
+        // For external use, replace 'configFromEnv' with your actual firebaseConfig object.
+        const configFromEnv = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ilocc-preview';
+        
+        let db;
+        let auth;
+        let user;
+
+        if (configFromEnv) {
+            const app = initializeApp(configFromEnv);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Auth Logic
+            const initAuth = async () => {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            };
+            initAuth();
+
+            onAuthStateChanged(auth, (u) => {
+                user = u;
+                if (user) {
+                    subscribeToRoadmap();
+                }
+            });
+        } else {
+            console.warn("Firebase config not found. Roadmap will not persist.");
+            // Render empty state if no config
+            setTimeout(() => renderKanban([]), 500); 
+        }
+
+        // --- KANBAN LOGIC ---
+        const axes = [
+            { id: 1, title: "Coordination & Chef de File" },
+            { id: 2, title: "Gouvernance Partagée" },
+            { id: 3, title: "Observatoire Économique" },
+            { id: 4, title: "Défense & Spécificité" },
+            { id: 5, title: "Veille Sanitaire & Qualité" }
+        ];
+
+        let roadmapData = [];
+
+        function subscribeToRoadmap() {
+            if (!db || !user) return;
+            // Public path as per instructions: /artifacts/{appId}/public/data/roadmap
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'roadmap'));
+            
+            onSnapshot(q, (snapshot) => {
+                roadmapData = [];
+                snapshot.forEach((doc) => {
+                    roadmapData.push({ id: doc.id, ...doc.data() });
+                });
+                renderKanban(roadmapData);
+            }, (error) => {
+                console.error("Error fetching roadmap:", error);
+            });
+        }
+
+        function renderKanban(items) {
+            const board = document.getElementById('kanban-board');
+            if (!board) return;
+
+            // Separate Objectives (no parentId) and Actions (has parentId)
+            const objectives = items.filter(i => !i.parentId && i.type !== 'Action'); // Legacy 'Action' type without parent considered root for safety
+            const actions = items.filter(i => i.parentId || i.type === 'Action' && !i.parentId); // Capture legacy orphan actions too if we want, but sticking to new logic:
+
+            // Actually, best logic:
+            // 1. Get Objectives (Items intended to be headers)
+            // 2. Map Actions to them
+            
+            board.innerHTML = axes.map(axis => {
+                const axisObjs = items.filter(i => parseInt(i.axisId) === axis.id && i.type === 'Objectif');
+                
+                return `
+                    <div class="roadmap-col">
+                        <div class="roadmap-header">
+                            <span>${axis.title}</span>
+                            <span class="text-xs opacity-70 bg-white/20 px-2 rounded">${axisObjs.length}</span>
+                        </div>
+                        <div class="roadmap-body">
+                            ${axisObjs.map(obj => {
+                                // Find actions linked to this objective
+                                const linkedActions = items.filter(i => i.parentId === obj.id);
+                                
+                                return `
+                                <div class="roadmap-card group relative" onclick="openDetails('${obj.id}')">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <span class="text-[10px] font-oswald uppercase tracking-wider text-dix-light">OBJECTIF</span>
+                                        ${configFromEnv ? `<button class="delete-btn opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500" data-id="${obj.id}">×</button>` : ''}
+                                    </div>
+                                    <h4 class="font-bold text-dix-dark text-sm leading-tight mb-2 font-oswald">${obj.title}</h4>
+                                    
+                                    <p class="text-xs text-gray-600 mb-2 font-georgia line-clamp-3">${obj.desc || ''}</p>
+                                    
+                                    <!-- Embedded Actions List -->
+                                    ${linkedActions.length > 0 ? `
+                                        <div class="mt-2 pt-2 border-t border-gray-100">
+                                            <span class="text-[9px] font-oswald uppercase text-gray-400 block mb-1">Actions :</span>
+                                            ${linkedActions.map(act => `
+                                                <div class="action-item-mini">
+                                                    <i data-lucide="wrench" class="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5"></i>
+                                                    <span class="line-clamp-1">${act.title}</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
+
+                                    ${(obj.notes && obj.notes.length > 0) ? `<div class="mt-2 pt-1 text-[9px] text-blue-600 flex items-center gap-1 justify-end"><i data-lucide="message-circle" class="w-3 h-3"></i> ${obj.notes.length} note(s)</div>` : ''}
+                                </div>
+                            `}).join('')}
+                            
+                            <div class="add-card-btn" data-axis="${axis.id}" data-axisname="${axis.title}">
+                                + Ajouter un Objectif
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Init Icons for injected HTML
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Add Event Listeners for "Add" buttons
+            board.querySelectorAll('.add-card-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!configFromEnv) { alert("Base de données non configurée."); return; }
+                    openModal(e.target.dataset.axis, e.target.dataset.axisname);
+                });
+            });
+
+            // Add Event Listeners for "Delete" buttons
+            board.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    if(confirm("Supprimer cet objectif et ses actions ?")) {
+                        deleteItem(e.target.dataset.id);
+                    }
+                });
+            });
+        }
+
+        // --- DETAILS & NOTES LOGIC ---
+        let currentDetailId = null;
+        const detailsModal = document.getElementById('details-modal');
+        const detailsContent = document.getElementById('details-content');
+        const notesList = document.getElementById('notes-list');
+        const actionsList = document.getElementById('actions-list');
+        const btnAddNote = document.getElementById('btn-add-note');
+        const btnAddAction = document.getElementById('btn-add-action');
+
+        // Expose to window for onclick in HTML
+        window.openDetails = function(id) {
+            currentDetailId = id;
+            const item = roadmapData.find(i => i.id === id);
+            if (!item) return;
+
+            const axisTitle = axes.find(a => a.id === item.axisId)?.title || "Inconnu";
+
+            // Render Static Content (Objective)
+            detailsContent.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xs font-oswald uppercase tracking-wider px-2 py-1 rounded bg-gray-100 text-gray-600">${axisTitle}</span>
+                    <span class="text-xs font-oswald uppercase tracking-wider px-2 py-1 rounded bg-green-100 text-green-800">Objectif Stratégique</span>
+                </div>
+                <h2 class="text-2xl font-oswald text-dix-dark mb-4">${item.title}</h2>
+                
+                <div>
+                    <span class="block text-[10px] font-oswald uppercase text-gray-400 mb-2">Description & Indicateurs</span>
+                    <p class="text-sm font-georgia text-dix-dark leading-relaxed whitespace-pre-wrap">${item.desc || 'Pas de description détaillée.'}</p>
+                </div>
+            `;
+
+            // Filter Actions linked to this objective
+            const linkedActions = roadmapData.filter(i => i.parentId === id);
+            renderActionsList(linkedActions);
+
+            // Render Notes
+            renderNotesList(item.notes || []);
+
+            detailsModal.style.display = 'flex';
+        }
+
+        window.closeDetailsModal = function() {
+            detailsModal.style.display = 'none';
+            currentDetailId = null;
+        }
+
+        function renderActionsList(actions) {
+            if (!actions || actions.length === 0) {
+                actionsList.innerHTML = '<div class="text-xs text-gray-400 italic mb-4">Aucune action définie pour cet objectif.</div>';
+                return;
+            }
+
+            actionsList.innerHTML = actions.map(act => `
+                <div class="bg-white border-l-4 border-amber-500 shadow-sm p-3 rounded-r flex justify-between items-start group">
+                    <div class="flex-1">
+                        <h5 class="font-oswald text-sm text-dix-dark font-medium">${act.title}</h5>
+                        <div class="flex flex-wrap gap-4 mt-2">
+                            ${act.means ? `<span class="text-xs text-gray-600 font-georgia"><strong class="font-oswald text-gray-400 uppercase text-[10px]">Moyens:</strong> ${act.means}</span>` : ''}
+                            ${act.owner ? `<span class="text-xs text-gray-600 font-georgia"><strong class="font-oswald text-gray-400 uppercase text-[10px]">Partenaires:</strong> ${act.owner}</span>` : ''}
+                        </div>
+                    </div>
+                    <button onclick="deleteAction('${act.id}')" class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+            `).join('');
+            
+            // Re-init icons for the list
+            lucide.createIcons();
+        }
+
+        function renderNotesList(notes) {
+            if (!notes || notes.length === 0) {
+                notesList.innerHTML = '<div class="text-xs text-gray-400 italic">Aucune note pour le moment.</div>';
+                return;
+            }
+
+            notesList.innerHTML = notes.map(note => `
+                <div class="bg-white border border-gray-100 p-3 rounded shadow-sm">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-oswald text-xs text-dix-dark font-bold">${note.author}</span>
+                        <span class="text-[10px] text-gray-400">${new Date(note.date).toLocaleDateString()}</span>
+                    </div>
+                    <p class="text-xs font-georgia text-gray-600">${note.text}</p>
+                </div>
+            `).join('');
+        }
+
+        // Add Action Logic
+        btnAddAction.addEventListener('click', async () => {
+            if (!db || !user || !currentDetailId) return;
+
+            const title = document.getElementById('action-title').value;
+            const means = document.getElementById('action-means').value;
+            const owner = document.getElementById('action-partner').value;
+
+            if (!title) { alert("L'intitulé de l'action est requis."); return; }
+
+            btnAddAction.disabled = true;
+            btnAddAction.textContent = '...';
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'roadmap'), {
+                    parentId: currentDetailId, // Link to Objective
+                    type: 'Action',
+                    title,
+                    means,
+                    owner,
+                    createdAt: new Date().toISOString(),
+                    userId: user.uid
+                });
+                
+                // Clear inputs
+                document.getElementById('action-title').value = '';
+                document.getElementById('action-means').value = '';
+                document.getElementById('action-partner').value = '';
+                
+                btnAddAction.disabled = false;
+                btnAddAction.textContent = "Ajouter l'action";
+                
+                // Note: The UI updates automatically via onSnapshot
+
+            } catch (e) {
+                console.error("Error adding action: ", e);
+                alert("Erreur lors de l'ajout");
+                btnAddAction.disabled = false;
+            }
+        });
+
+        // Add Note Logic
+        btnAddNote.addEventListener('click', async () => {
+            if (!db || !user || !currentDetailId) return;
+
+            const author = document.getElementById('note-author').value;
+            const text = document.getElementById('note-text').value;
+
+            if (!author || !text) { alert("Merci de remplir votre nom et le commentaire."); return; }
+
+            btnAddNote.disabled = true;
+            btnAddNote.textContent = '...';
+
+            const newNote = {
+                author,
+                text,
+                date: new Date().toISOString(),
+                uid: user.uid
+            };
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'roadmap', currentDetailId);
+                await updateDoc(docRef, {
+                    notes: arrayUnion(newNote)
+                });
+                
+                document.getElementById('note-author').value = '';
+                document.getElementById('note-text').value = '';
+                btnAddNote.disabled = false;
+                btnAddNote.textContent = 'Ajouter note';
+
+            } catch (e) {
+                console.error("Error adding note: ", e);
+                alert("Erreur lors de l'ajout");
+                btnAddNote.disabled = false;
+            }
+        });
+
+        // Global function for onclick delete action
+        window.deleteAction = async function(id) {
+            if (!db || !user) return;
+            if(confirm("Supprimer cette action ?")) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roadmap', id));
+                } catch (e) { console.error(e); }
+            }
+        }
+
+
+        // --- MODAL CREATE OBJECTIVE LOGIC ---
+        const modal = document.getElementById('roadmap-modal');
+        const saveBtn = document.getElementById('btn-save-roadmap');
+
+        function openModal(axisId, axisName) {
+            document.getElementById('modal-axis-id').value = axisId;
+            document.getElementById('modal-axis-name').value = axisName;
+            document.getElementById('modal-title').value = '';
+            document.getElementById('modal-desc').value = '';
+            modal.style.display = 'flex';
+        }
+
+        saveBtn.addEventListener('click', async () => {
+            if (!db || !user) return;
+
+            const axisId = document.getElementById('modal-axis-id').value;
+            const title = document.getElementById('modal-title').value;
+            const desc = document.getElementById('modal-desc').value;
+
+            if (!title) { alert('Veuillez mettre un titre'); return; }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = '...';
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'roadmap'), {
+                    axisId: parseInt(axisId),
+                    title,
+                    desc,
+                    type: 'Objectif',
+                    notes: [], 
+                    createdAt: new Date().toISOString(),
+                    userId: user.uid
+                });
+                modal.style.display = 'none';
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                alert("Erreur lors de l'enregistrement");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Créer l\'objectif';
+            }
+        });
+
+        async function deleteItem(docId) {
+            if (!db || !user) return;
+            try {
+                // Ideally we should delete children too, but Firestore doesn't cascade.
+                // For this prototype, we just delete the objective.
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'roadmap', docId));
+            } catch (e) {
+                console.error("Error deleting: ", e);
+            }
+        }
+
+        // --- EXPORT FUNCTIONS ---
+        function exportToCSV() {
+            if (!roadmapData || roadmapData.length === 0) { alert("Aucune donnée à exporter."); return; }
+            
+            // Header
+            let csv = "Axe;Type;Objectif;Action;Moyens;Partenaires\n";
+            
+            // We need to flatten the hierarchy for CSV
+            const objectives = roadmapData.filter(i => i.type === 'Objectif');
+            
+            objectives.forEach(obj => {
+                const axis = axes.find(a => a.id === obj.axisId)?.title || "Inconnu";
+                const safe = (txt) => txt ? `"${txt.replace(/"/g, '""')}"` : "";
+                
+                // Write Objective line
+                csv += `${safe(axis)};Objectif;${safe(obj.title)};-;-;-\n`;
+                
+                // Write Action lines
+                const objActions = roadmapData.filter(i => i.parentId === obj.id);
+                objActions.forEach(act => {
+                    csv += `${safe(axis)};Action;${safe(obj.title)};${safe(act.title)};${safe(act.means)};${safe(act.owner)}\n`;
+                });
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "feuille_de_route_ilocc.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function printRoadmap() {
+            if (!roadmapData || roadmapData.length === 0) { alert("Aucune donnée à imprimer."); return; }
+
+            const printWindow = window.open('', '_blank');
+            let content = `
+                <html>
+                <head>
+                    <title>Feuille de Route ILOCC - Export</title>
+                    <style>
+                        body { font-family: 'Georgia', serif; color: #333; padding: 40px; max-width: 800px; margin: 0 auto; }
+                        h1 { font-family: sans-serif; text-transform: uppercase; color: #405F59; border-bottom: 4px solid #549e39; padding-bottom: 10px; }
+                        h2 { font-family: sans-serif; text-transform: uppercase; color: #549e39; margin-top: 30px; font-size: 1.2rem; background: #f3f3f3; padding: 10px; page-break-after: avoid; }
+                        .obj-block { border: 1px solid #ddd; margin-bottom: 20px; page-break-inside: avoid; border-left: 6px solid #549e39; }
+                        .obj-header { padding: 15px; background: #fdfbf7; border-bottom: 1px solid #eee; }
+                        .obj-title { font-weight: bold; font-size: 1.1rem; display: block; font-family: sans-serif; text-transform: uppercase; color: #405F59; }
+                        .obj-desc { font-size: 0.9rem; margin-top: 5px; color: #666; font-style: italic; }
+                        .action-list { padding: 15px; background: white; }
+                        .action-item { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #eee; display: flex; gap: 10px; align-items: start; }
+                        .action-item:last-child { border-bottom: none; }
+                        .action-title { font-weight: bold; font-size: 0.95rem; }
+                        .action-meta { font-size: 0.8rem; color: #666; margin-top: 2px; }
+                        .bullet { color: #eab308; font-size: 1.2rem; line-height: 1; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Feuille de Route ILOCC</h1>
+                    <p>Export du ${new Date().toLocaleDateString()}</p>
+            `;
+
+            axes.forEach(axis => {
+                const objs = roadmapData.filter(i => parseInt(i.axisId) === axis.id && i.type === 'Objectif');
+                if (objs.length > 0) {
+                    content += `<h2>${axis.title}</h2>`;
+                    objs.forEach(obj => {
+                        const objActions = roadmapData.filter(i => i.parentId === obj.id);
+                        
+                        let actionsHtml = '';
+                        if (objActions.length > 0) {
+                            actionsHtml = '<div class="action-list">' + objActions.map(act => `
+                                <div class="action-item">
+                                    <span class="bullet">↳</span>
+                                    <div>
+                                        <div class="action-title">${act.title}</div>
+                                        <div class="action-meta">
+                                            ${act.means ? `Moyens: ${act.means}` : ''} 
+                                            ${(act.means && act.owner) ? ' | ' : ''}
+                                            ${act.owner ? `Partenaires: ${act.owner}` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('') + '</div>';
+                        } else {
+                            actionsHtml = '<div class="action-list" style="color:#999; font-size:0.8rem;">Aucune action définie.</div>';
+                        }
+
+                        content += `
+                            <div class="obj-block">
+                                <div class="obj-header">
+                                    <span class="obj-title">${obj.title}</span>
+                                    <div class="obj-desc">${obj.desc || ''}</div>
+                                </div>
+                                ${actionsHtml}
+                            </div>
+                        `;
+                    });
+                }
+            });
+
+            content += `
+                <script>
+                    window.onload = function() { window.print(); }
+                <\/script>
+                </body></html>
+            `;
+
+            printWindow.document.write(content);
+            printWindow.document.close();
+        }
+
+        // Bind events
+        document.getElementById('btn-export-csv').addEventListener('click', exportToCSV);
+        document.getElementById('btn-export-pdf').addEventListener('click', printRoadmap);
+
+        // Expose renderKanban globally just in case, though module scope protects it
+        window.renderKanban = renderKanban;
     </script>
 </body>
 </html>
