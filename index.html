@@ -1776,12 +1776,12 @@
 
     <!-- FIREBASE & KANBAN MODULE -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- CONFIGURATION FIREBASE ---
-        // Configuration nettoyée et insérée manuellement
+        // Vos clés (nettoyées)
         const manualConfig = {
             apiKey: "AIzaSyDZkwWnd2llryuaYpeNppXEqjlbk11GvrE",
             authDomain: "ilocc-1b57d.firebaseapp.com",
@@ -1795,20 +1795,14 @@
         let firebaseConfig = null;
         let isManual = false;
         
-        // 1. Try Manual Config first
         if (manualConfig && manualConfig.apiKey && manualConfig.apiKey.length > 0) {
             firebaseConfig = manualConfig;
             isManual = true;
-            console.log("Utilisation de la configuration manuelle (Projet : " + manualConfig.projectId + ")");
-        } 
-        // 2. Try Environment Config if available and no manual config
-        else if (typeof __firebase_config !== 'undefined') {
+            console.log("Configuration manuelle active.");
+        } else if (typeof __firebase_config !== 'undefined') {
             try {
                 firebaseConfig = JSON.parse(__firebase_config);
-                console.log("Utilisation de la configuration environnement (__firebase_config).");
-            } catch (e) {
-                console.error("Erreur de parsing de __firebase_config", e);
-            }
+            } catch (e) { console.error("Erreur config auto", e); }
         }
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ilocc-preview';
@@ -1819,23 +1813,27 @@
 
         if (firebaseConfig && firebaseConfig.apiKey) {
             try {
-                const app = initializeApp(firebaseConfig);
+                // Singleton pattern to avoid "App already exists"
+                let app;
+                if (getApps().length === 0) {
+                    app = initializeApp(firebaseConfig);
+                } else {
+                    app = getApp();
+                }
+                
                 db = getFirestore(app);
                 auth = getAuth(app);
 
                 // Auth Logic
                 const initAuth = async () => {
-                    // SI CONFIGURATION MANUELLE : On force la connexion anonyme pour éviter les conflits de tokens
                     if (isManual) {
-                        console.log("Connexion anonyme forcée (Config Manuelle détectée)...");
+                        // Force anonymous if manual config to avoid env token conflicts
                         await signInAnonymously(auth);
-                    } 
-                    // SINON (Environnement de démo) : On tente le token système
-                    else if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    } else if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         try {
                             await signInWithCustomToken(auth, __initial_auth_token);
                         } catch(err) {
-                            console.warn("Echec du token custom, repli sur anonyme", err);
+                            console.warn("Token invalide, repli sur anonyme");
                             await signInAnonymously(auth);
                         }
                     } else {
@@ -1844,46 +1842,29 @@
                 };
                 
                 initAuth().catch(err => {
-                    console.error("Erreur critique d'authentification:", err);
-                    alert("Erreur de connexion à la base de données. Vérifiez la console.");
+                    console.error("Erreur AUTH:", err);
+                    let msg = "Erreur de connexion.";
+                    if (err.code === 'auth/operation-not-allowed') {
+                        msg = "ERREUR : L'authentification 'Anonyme' n'est pas activée dans la console Firebase (Authentication > Sign-in method).";
+                    } else if (err.code === 'auth/configuration-not-found') {
+                        msg = "ERREUR : Configuration Firebase invalide.";
+                    }
+                    alert(msg);
                 });
 
                 onAuthStateChanged(auth, (u) => {
                     user = u;
                     if (user) {
-                        console.log("Connecté à Firebase avec succès (UID: " + user.uid + ")");
+                        console.log("Connecté (UID: " + user.uid + ")");
                         subscribeToRoadmap();
                     }
                 });
             } catch (err) {
-                console.error("Erreur d'initialisation Firebase. Vérifiez votre configuration manualConfig.", err);
+                console.error("Erreur d'initialisation Firebase:", err);
             }
         } else {
-            console.warn("Aucune configuration Firebase trouvée. Mode lecture seule / local.");
-            // Render empty state if no config
+            console.warn("Pas de configuration Firebase. Mode hors ligne.");
             setTimeout(() => renderKanban([]), 500); 
-            
-            // Affiche un bandeau d'alerte pour guider l'utilisateur
-            setTimeout(() => {
-                const roadmapTab = document.getElementById('tab-roadmap');
-                if(roadmapTab) {
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = "bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 mb-4 text-sm font-georgia flex items-center justify-between";
-                    alertDiv.innerHTML = `
-                        <div>
-                            <p class='font-bold font-oswald uppercase'>Mode Déconnecté</p>
-                            <p>La base de données n'est pas connectée. Vos modifications ne seront pas sauvegardées.</p>
-                            <p class='text-xs mt-1'>Pour activer la sauvegarde : Configurez <code>manualConfig</code> dans le code source (bas de page).</p>
-                        </div>
-                        <i data-lucide="database-off" class="w-6 h-6 opacity-50"></i>
-                    `;
-                    // Insert after the header
-                    const container = roadmapTab.querySelector('.flex-col');
-                    const target = roadmapTab.querySelector('.min-h-0');
-                    if (container && target) container.insertBefore(alertDiv, target);
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                }
-            }, 1000);
         }
 
         // --- KANBAN LOGIC ---
