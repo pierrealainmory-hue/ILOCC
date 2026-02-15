@@ -877,6 +877,9 @@
                     </div>
                     <div class="flex flex-col items-end gap-1">
                         <div class="flex gap-2">
+                            <div id="connection-status" class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded flex items-center gap-1 font-oswald uppercase">
+                                <span class="w-2 h-2 rounded-full bg-gray-400"></span> Déconnecté
+                            </div>
                             <button id="btn-export-csv" class="text-xs bg-white border border-gray-300 px-2 py-1 rounded text-dix-dark hover:bg-gray-50 flex items-center gap-1 font-oswald uppercase transition-colors">
                                 <i data-lucide="file-spreadsheet" class="w-3 h-3"></i> CSV
                             </button>
@@ -1776,12 +1779,12 @@
 
     <!-- FIREBASE & KANBAN MODULE -->
     <script type="module">
-        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- CONFIGURATION FIREBASE ---
-        // Vos clés (nettoyées)
+        // Configuration nettoyée et insérée manuellement
         const manualConfig = {
             apiKey: "AIzaSyDZkwWnd2llryuaYpeNppXEqjlbk11GvrE",
             authDomain: "ilocc-1b57d.firebaseapp.com",
@@ -1795,14 +1798,20 @@
         let firebaseConfig = null;
         let isManual = false;
         
+        // 1. Try Manual Config first
         if (manualConfig && manualConfig.apiKey && manualConfig.apiKey.length > 0) {
             firebaseConfig = manualConfig;
             isManual = true;
-            console.log("Configuration manuelle active.");
-        } else if (typeof __firebase_config !== 'undefined') {
+            console.log("Utilisation de la configuration manuelle (Projet : " + manualConfig.projectId + ")");
+        } 
+        // 2. Try Environment Config if available and no manual config
+        else if (typeof __firebase_config !== 'undefined') {
             try {
                 firebaseConfig = JSON.parse(__firebase_config);
-            } catch (e) { console.error("Erreur config auto", e); }
+                console.log("Utilisation de la configuration environnement (__firebase_config).");
+            } catch (e) {
+                console.error("Erreur de parsing de __firebase_config", e);
+            }
         }
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ilocc-preview';
@@ -1811,29 +1820,35 @@
         let auth;
         let user;
 
+        const updateConnectionStatus = (isConnected) => {
+            const statusEl = document.getElementById('connection-status');
+            if (statusEl) {
+                statusEl.innerHTML = isConnected 
+                    ? `<span class="w-2 h-2 rounded-full bg-green-500"></span> Connecté`
+                    : `<span class="w-2 h-2 rounded-full bg-red-500"></span> Déconnecté`;
+                statusEl.className = `text-xs px-2 py-1 rounded flex items-center gap-1 font-oswald uppercase ${isConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+            }
+        };
+
         if (firebaseConfig && firebaseConfig.apiKey) {
             try {
-                // Singleton pattern to avoid "App already exists"
-                let app;
-                if (getApps().length === 0) {
-                    app = initializeApp(firebaseConfig);
-                } else {
-                    app = getApp();
-                }
-                
+                const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
                 // Auth Logic
                 const initAuth = async () => {
+                    // SI CONFIGURATION MANUELLE : On force la connexion anonyme pour éviter les conflits de tokens
                     if (isManual) {
-                        // Force anonymous if manual config to avoid env token conflicts
+                        console.log("Connexion anonyme forcée (Config Manuelle détectée)...");
                         await signInAnonymously(auth);
-                    } else if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    } 
+                    // SINON (Environnement de démo) : On tente le token système
+                    else if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         try {
                             await signInWithCustomToken(auth, __initial_auth_token);
                         } catch(err) {
-                            console.warn("Token invalide, repli sur anonyme");
+                            console.warn("Echec du token custom, repli sur anonyme", err);
                             await signInAnonymously(auth);
                         }
                     } else {
@@ -1842,29 +1857,52 @@
                 };
                 
                 initAuth().catch(err => {
-                    console.error("Erreur AUTH:", err);
-                    let msg = "Erreur de connexion.";
-                    if (err.code === 'auth/operation-not-allowed') {
-                        msg = "ERREUR : L'authentification 'Anonyme' n'est pas activée dans la console Firebase (Authentication > Sign-in method).";
-                    } else if (err.code === 'auth/configuration-not-found') {
-                        msg = "ERREUR : Configuration Firebase invalide.";
-                    }
-                    alert(msg);
+                    console.error("Erreur critique d'authentification:", err);
+                    updateConnectionStatus(false);
+                    // alert("Erreur de connexion à la base de données. Vérifiez la console.");
                 });
 
                 onAuthStateChanged(auth, (u) => {
                     user = u;
                     if (user) {
-                        console.log("Connecté (UID: " + user.uid + ")");
+                        console.log("Connecté à Firebase avec succès (UID: " + user.uid + ")");
+                        updateConnectionStatus(true);
                         subscribeToRoadmap();
+                    } else {
+                        updateConnectionStatus(false);
                     }
                 });
             } catch (err) {
-                console.error("Erreur d'initialisation Firebase:", err);
+                console.error("Erreur d'initialisation Firebase. Vérifiez votre configuration manualConfig.", err);
+                updateConnectionStatus(false);
             }
         } else {
-            console.warn("Pas de configuration Firebase. Mode hors ligne.");
+            console.warn("Aucune configuration Firebase trouvée. Mode lecture seule / local.");
+            // Render empty state if no config
             setTimeout(() => renderKanban([]), 500); 
+            updateConnectionStatus(false);
+            
+            // Affiche un bandeau d'alerte pour guider l'utilisateur
+            setTimeout(() => {
+                const roadmapTab = document.getElementById('tab-roadmap');
+                if(roadmapTab) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = "bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 mb-4 text-sm font-georgia flex items-center justify-between";
+                    alertDiv.innerHTML = `
+                        <div>
+                            <p class='font-bold font-oswald uppercase'>Mode Déconnecté</p>
+                            <p>La base de données n'est pas connectée. Vos modifications ne seront pas sauvegardées.</p>
+                            <p class='text-xs mt-1'>Pour activer la sauvegarde : Configurez <code>manualConfig</code> dans le code source (bas de page).</p>
+                        </div>
+                        <i data-lucide="database-off" class="w-6 h-6 opacity-50"></i>
+                    `;
+                    // Insert after the header
+                    const container = roadmapTab.querySelector('.flex-col');
+                    const target = roadmapTab.querySelector('.min-h-0');
+                    if (container && target) container.insertBefore(alertDiv, target);
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+            }, 1000);
         }
 
         // --- KANBAN LOGIC ---
@@ -2069,7 +2107,17 @@
 
         // Add Action Logic
         btnAddAction.addEventListener('click', async () => {
-            if (!db || !user || !currentDetailId) { alert("Erreur : Non connecté à la base de données."); return; }
+            if (!db) { alert("Erreur : Non connecté à la base de données."); return; }
+            if (!user) {
+                console.log("Utilisateur non connecté, tentative de reconnexion anonyme...");
+                try {
+                    await signInAnonymously(auth);
+                } catch (e) {
+                    console.error("Echec reconnexion:", e);
+                    alert("Impossible de vous reconnecter. Vérifiez votre connexion.");
+                    return;
+                }
+            }
 
             const title = document.getElementById('action-title').value;
             const means = document.getElementById('action-means').value;
@@ -2088,7 +2136,7 @@
                     means,
                     owner,
                     createdAt: new Date().toISOString(),
-                    userId: user.uid
+                    userId: auth.currentUser.uid // Use auth.currentUser directly to be safe
                 });
                 
                 // Clear inputs
@@ -2103,14 +2151,18 @@
 
             } catch (e) {
                 console.error("Error adding action: ", e);
-                alert("Erreur lors de l'ajout");
+                alert("Erreur lors de l'ajout: " + e.message);
                 btnAddAction.disabled = false;
             }
         });
 
         // Add Note Logic
         btnAddNote.addEventListener('click', async () => {
-            if (!db || !user || !currentDetailId) { alert("Erreur : Non connecté à la base de données."); return; }
+            if (!db) { alert("Erreur : Non connecté à la base de données."); return; }
+            if (!user) {
+                try { await signInAnonymously(auth); } 
+                catch (e) { alert("Erreur connexion: " + e.message); return; }
+            }
 
             const author = document.getElementById('note-author').value;
             const text = document.getElementById('note-text').value;
@@ -2124,7 +2176,7 @@
                 author,
                 text,
                 date: new Date().toISOString(),
-                uid: user.uid
+                uid: auth.currentUser.uid
             };
 
             try {
@@ -2170,8 +2222,22 @@
 
         saveBtn.addEventListener('click', async () => {
             console.log("Tentative de sauvegarde..."); // Debug log
-            if (!db || !user) { 
-                alert("Erreur : Non connecté à la base de données. Vérifiez votre connexion internet ou la configuration."); 
+            
+            // Auto-reconnect if needed
+            if (!auth.currentUser) {
+                console.log("Utilisateur non détecté, tentative de reconnexion...");
+                try {
+                    await signInAnonymously(auth);
+                    console.log("Reconnexion réussie !");
+                } catch (e) {
+                    console.error("Echec reconnexion:", e);
+                    alert("Impossible de se connecter à la base de données. Vérifiez votre connexion internet.");
+                    return;
+                }
+            }
+
+            if (!db) { 
+                alert("Erreur critique : Base de données non initialisée."); 
                 return; 
             }
 
@@ -2192,7 +2258,7 @@
                     type: 'Objectif',
                     notes: [], 
                     createdAt: new Date().toISOString(),
-                    userId: user.uid
+                    userId: auth.currentUser.uid
                 });
                 console.log("Sauvegarde réussie !");
                 modal.style.display = 'none';
