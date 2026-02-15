@@ -1790,85 +1790,7 @@
             appId: "1:653444870972:web:6942083028df18b2cea439"
         };
 
-        // Determine which config to use
-        let firebaseConfig = null;
-        
-        // 1. Try Manual Config first
-        if (manualConfig && manualConfig.apiKey && manualConfig.apiKey.length > 0) {
-            firebaseConfig = manualConfig;
-            console.log("Utilisation de la configuration manuelle (manualConfig).");
-        } 
-        // 2. Try Environment Config if available and no manual config
-        else if (typeof __firebase_config !== 'undefined') {
-            try {
-                firebaseConfig = JSON.parse(__firebase_config);
-                console.log("Utilisation de la configuration environnement (__firebase_config).");
-            } catch (e) {
-                console.error("Erreur de parsing de __firebase_config", e);
-            }
-        }
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ilocc-preview';
-        
-        let db;
-        let auth;
-        let user;
-
-        if (firebaseConfig && firebaseConfig.apiKey) {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                // Auth Logic
-                const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                };
-                initAuth();
-
-                onAuthStateChanged(auth, (u) => {
-                    user = u;
-                    if (user) {
-                        // console.log("Connecté à Firebase:", user.uid);
-                        subscribeToRoadmap();
-                    }
-                });
-            } catch (err) {
-                console.error("Erreur d'initialisation Firebase. Vérifiez votre configuration manualConfig.", err);
-            }
-        } else {
-            console.warn("Aucune configuration Firebase trouvée. Mode lecture seule / local.");
-            // Render empty state if no config
-            setTimeout(() => renderKanban([]), 500); 
-            
-            // Affiche un bandeau d'alerte pour guider l'utilisateur
-            setTimeout(() => {
-                const roadmapTab = document.getElementById('tab-roadmap');
-                if(roadmapTab) {
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = "bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 mb-4 text-sm font-georgia flex items-center justify-between";
-                    alertDiv.innerHTML = `
-                        <div>
-                            <p class='font-bold font-oswald uppercase'>Mode Déconnecté</p>
-                            <p>La base de données n'est pas connectée. Vos modifications ne seront pas sauvegardées.</p>
-                            <p class='text-xs mt-1'>Pour activer la sauvegarde : Configurez <code>manualConfig</code> dans le code source (bas de page).</p>
-                        </div>
-                        <i data-lucide="database-off" class="w-6 h-6 opacity-50"></i>
-                    `;
-                    // Insert after the header
-                    const container = roadmapTab.querySelector('.flex-col');
-                    const target = roadmapTab.querySelector('.min-h-0');
-                    if (container && target) container.insertBefore(alertDiv, target);
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                }
-            }, 1000);
-        }
-
-        // --- KANBAN LOGIC ---
+        // KANBAN LOGIC & AXES (Définis ici pour être utilisés immédiatement)
         const axes = [
             { id: 1, title: "Coordination & Chef de File" },
             { id: 2, title: "Gouvernance Partagée" },
@@ -1879,36 +1801,14 @@
 
         let roadmapData = [];
 
-        function subscribeToRoadmap() {
-            if (!db || !user) return;
-            // Public path as per instructions: /artifacts/{appId}/public/data/roadmap
-            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'roadmap'));
-            
-            onSnapshot(q, (snapshot) => {
-                roadmapData = [];
-                snapshot.forEach((doc) => {
-                    roadmapData.push({ id: doc.id, ...doc.data() });
-                });
-                renderKanban(roadmapData);
-            }, (error) => {
-                console.error("Error fetching roadmap:", error);
-            });
-        }
-
+        // Fonction de rendu (exposée globalement pour être appelée si besoin)
         function renderKanban(items) {
             const board = document.getElementById('kanban-board');
             if (!board) return;
 
-            // Separate Objectives (no parentId) and Actions (has parentId)
-            const objectives = items.filter(i => !i.parentId && i.type !== 'Action'); // Legacy 'Action' type without parent considered root for safety
-            const actions = items.filter(i => i.parentId || i.type === 'Action' && !i.parentId); // Capture legacy orphan actions too if we want, but sticking to new logic:
-
-            // Actually, best logic:
-            // 1. Get Objectives (Items intended to be headers)
-            // 2. Map Actions to them
-            
             board.innerHTML = axes.map(axis => {
-                const axisObjs = items.filter(i => parseInt(i.axisId) === axis.id && i.type === 'Objectif');
+                // Si items est vide, on affiche juste la structure
+                const axisObjs = items ? items.filter(i => parseInt(i.axisId) === axis.id && i.type === 'Objectif') : [];
                 
                 return `
                     <div class="roadmap-col">
@@ -1917,10 +1817,9 @@
                             <span class="text-xs opacity-70 bg-white/20 px-2 rounded">${axisObjs.length}</span>
                         </div>
                         <div class="roadmap-body">
+                            ${axisObjs.length === 0 && (!items || items.length === 0) ? '<div class="text-xs text-gray-400 text-center italic py-4">Aucun objectif</div>' : ''}
                             ${axisObjs.map(obj => {
-                                // Find actions linked to this objective
                                 const linkedActions = items.filter(i => i.parentId === obj.id);
-                                
                                 return `
                                 <div class="roadmap-card group relative" onclick="openDetails('${obj.id}')">
                                     <div class="flex justify-between items-start mb-1">
@@ -1928,10 +1827,8 @@
                                         ${(user) ? `<button class="delete-btn opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500" data-id="${obj.id}">×</button>` : ''}
                                     </div>
                                     <h4 class="font-bold text-dix-dark text-sm leading-tight mb-2 font-oswald">${obj.title}</h4>
-                                    
                                     <p class="text-xs text-gray-600 mb-2 font-georgia line-clamp-3">${obj.desc || ''}</p>
                                     
-                                    <!-- Embedded Actions List -->
                                     ${linkedActions.length > 0 ? `
                                         <div class="mt-2 pt-2 border-t border-gray-100">
                                             <span class="text-[9px] font-oswald uppercase text-gray-400 block mb-1">Actions :</span>
@@ -1956,19 +1853,22 @@
                 `;
             }).join('');
 
-            // Init Icons for injected HTML
             if (typeof lucide !== 'undefined') lucide.createIcons();
+            attachEventHandlers();
+        }
 
-            // Add Event Listeners for "Add" buttons
+        function attachEventHandlers() {
+            const board = document.getElementById('kanban-board');
+            if (!board) return;
+
             board.querySelectorAll('.add-card-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (!db) { alert("Base de données non configurée."); return; }
+                    if (!db) { alert("Connexion base de données en cours ou échouée..."); return; }
                     openModal(e.target.dataset.axis, e.target.dataset.axisname);
                 });
             });
 
-            // Add Event Listeners for "Delete" buttons
             board.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation(); 
@@ -1976,6 +1876,69 @@
                         deleteItem(e.target.dataset.id);
                     }
                 });
+            });
+        }
+
+        // Rendu immédiat (vide) pour que la page s'affiche même si Firebase charge
+        renderKanban([]);
+        window.renderKanban = renderKanban; // Expose globalement
+
+        // --- FIREBASE INIT ---
+        let firebaseConfig = null;
+        let isManual = false;
+        
+        if (manualConfig && manualConfig.apiKey) {
+            firebaseConfig = manualConfig;
+            isManual = true;
+        } else if (typeof __firebase_config !== 'undefined') {
+            try { firebaseConfig = JSON.parse(__firebase_config); } catch (e) {}
+        }
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ilocc-preview';
+        let db;
+        let auth;
+        let user;
+
+        if (firebaseConfig && firebaseConfig.apiKey) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                const initAuth = async () => {
+                    if (isManual) {
+                        await signInAnonymously(auth);
+                    } else if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        try { await signInWithCustomToken(auth, __initial_auth_token); } 
+                        catch(err) { await signInAnonymously(auth); }
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                };
+                
+                initAuth().catch(err => console.error("Auth Error:", err));
+
+                onAuthStateChanged(auth, (u) => {
+                    user = u;
+                    if (user) {
+                        subscribeToRoadmap();
+                    }
+                });
+            } catch (err) {
+                console.error("Firebase Init Error:", err);
+            }
+        }
+
+        function subscribeToRoadmap() {
+            if (!db || !user) return;
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'roadmap'));
+            
+            onSnapshot(q, (snapshot) => {
+                roadmapData = [];
+                snapshot.forEach((doc) => {
+                    roadmapData.push({ id: doc.id, ...doc.data() });
+                });
+                renderKanban(roadmapData);
             });
         }
 
@@ -2326,9 +2289,6 @@
         // Bind events
         document.getElementById('btn-export-csv').addEventListener('click', exportToCSV);
         document.getElementById('btn-export-pdf').addEventListener('click', printRoadmap);
-
-        // Expose renderKanban globally just in case, though module scope protects it
-        window.renderKanban = renderKanban;
     </script>
 </body>
 </html>
