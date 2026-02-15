@@ -1779,12 +1779,12 @@
 
     <!-- FIREBASE & KANBAN MODULE -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- CONFIGURATION FIREBASE ---
-        // Configuration nettoyée et insérée manuellement
+        // Configuration manuelle forcée (Celle que vous avez fournie)
         const manualConfig = {
             apiKey: "AIzaSyDZkwWnd2llryuaYpeNppXEqjlbk11GvrE",
             authDomain: "ilocc-1b57d.firebaseapp.com",
@@ -1794,116 +1794,89 @@
             appId: "1:653444870972:web:6942083028df18b2cea439"
         };
 
-        // Determine which config to use
-        let firebaseConfig = null;
-        let isManual = false;
-        
-        // 1. Try Manual Config first
-        if (manualConfig && manualConfig.apiKey && manualConfig.apiKey.length > 0) {
-            firebaseConfig = manualConfig;
-            isManual = true;
-            console.log("Utilisation de la configuration manuelle (Projet : " + manualConfig.projectId + ")");
-        } 
-        // 2. Try Environment Config if available and no manual config
-        else if (typeof __firebase_config !== 'undefined') {
-            try {
-                firebaseConfig = JSON.parse(__firebase_config);
-                console.log("Utilisation de la configuration environnement (__firebase_config).");
-            } catch (e) {
-                console.error("Erreur de parsing de __firebase_config", e);
-            }
-        }
-
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ilocc-preview';
         
         let db;
         let auth;
         let user;
+        let lastError = null; // Stocke la dernière erreur pour diagnostic
 
-        const updateConnectionStatus = (isConnected) => {
+        const updateConnectionStatus = (isConnected, errorMsg = null) => {
             const statusEl = document.getElementById('connection-status');
             if (statusEl) {
-                statusEl.innerHTML = isConnected 
-                    ? `<span class="w-2 h-2 rounded-full bg-green-500"></span> Connecté`
-                    : `<span class="w-2 h-2 rounded-full bg-red-500"></span> Déconnecté`;
-                statusEl.className = `text-xs px-2 py-1 rounded flex items-center gap-1 font-oswald uppercase ${isConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+                if (isConnected) {
+                    statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500"></span> Connecté`;
+                    statusEl.className = `text-xs px-2 py-1 rounded flex items-center gap-1 font-oswald uppercase bg-green-100 text-green-700 cursor-default`;
+                    statusEl.onclick = null;
+                } else {
+                    statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Déconnecté (?)`;
+                    statusEl.className = `text-xs px-2 py-1 rounded flex items-center gap-1 font-oswald uppercase bg-red-100 text-red-700 cursor-pointer hover:bg-red-200`;
+                    statusEl.title = "Cliquez pour voir l'erreur";
+                    // Click pour voir l'erreur
+                    statusEl.onclick = () => {
+                        let alertText = "Statut : Déconnecté.\n\n";
+                        if (errorMsg) {
+                            alertText += "Erreur technique : " + errorMsg + "\n\n";
+                            if (errorMsg.includes("auth/operation-not-allowed")) {
+                                alertText += "👉 SOLUTION : Activez l'authentification 'Anonyme' dans la console Firebase (Authentication > Sign-in method).";
+                            } else if (errorMsg.includes("permission-denied")) {
+                                alertText += "👉 SOLUTION : Vérifiez les Règles de sécurité dans Firestore Database.";
+                            }
+                        } else {
+                            alertText += "Vérifiez votre connexion internet ou la configuration Firebase.";
+                        }
+                        alert(alertText);
+                    };
+                }
             }
         };
 
-        if (firebaseConfig && firebaseConfig.apiKey) {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                // Auth Logic
-                const initAuth = async () => {
-                    // SI CONFIGURATION MANUELLE : On force la connexion anonyme pour éviter les conflits de tokens
-                    if (isManual) {
-                        console.log("Connexion anonyme forcée (Config Manuelle détectée)...");
-                        await signInAnonymously(auth);
-                    } 
-                    // SINON (Environnement de démo) : On tente le token système
-                    else if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        try {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } catch(err) {
-                            console.warn("Echec du token custom, repli sur anonyme", err);
-                            await signInAnonymously(auth);
-                        }
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                };
-                
-                initAuth().catch(err => {
-                    console.error("Erreur critique d'authentification:", err);
-                    updateConnectionStatus(false);
-                    // alert("Erreur de connexion à la base de données. Vérifiez la console.");
-                });
-
-                onAuthStateChanged(auth, (u) => {
-                    user = u;
-                    if (user) {
-                        console.log("Connecté à Firebase avec succès (UID: " + user.uid + ")");
-                        updateConnectionStatus(true);
-                        subscribeToRoadmap();
-                    } else {
-                        updateConnectionStatus(false);
-                    }
-                });
-            } catch (err) {
-                console.error("Erreur d'initialisation Firebase. Vérifiez votre configuration manualConfig.", err);
-                updateConnectionStatus(false);
+        // Initialisation robuste
+        try {
+            let app;
+            // On vérifie si une app existe déjà pour éviter les doublons
+            if (getApps().length === 0) {
+                app = initializeApp(manualConfig);
+            } else {
+                app = getApp();
             }
-        } else {
-            console.warn("Aucune configuration Firebase trouvée. Mode lecture seule / local.");
-            // Render empty state if no config
-            setTimeout(() => renderKanban([]), 500); 
-            updateConnectionStatus(false);
-            
-            // Affiche un bandeau d'alerte pour guider l'utilisateur
-            setTimeout(() => {
-                const roadmapTab = document.getElementById('tab-roadmap');
-                if(roadmapTab) {
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = "bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 mb-4 text-sm font-georgia flex items-center justify-between";
-                    alertDiv.innerHTML = `
-                        <div>
-                            <p class='font-bold font-oswald uppercase'>Mode Déconnecté</p>
-                            <p>La base de données n'est pas connectée. Vos modifications ne seront pas sauvegardées.</p>
-                            <p class='text-xs mt-1'>Pour activer la sauvegarde : Configurez <code>manualConfig</code> dans le code source (bas de page).</p>
-                        </div>
-                        <i data-lucide="database-off" class="w-6 h-6 opacity-50"></i>
-                    `;
-                    // Insert after the header
-                    const container = roadmapTab.querySelector('.flex-col');
-                    const target = roadmapTab.querySelector('.min-h-0');
-                    if (container && target) container.insertBefore(alertDiv, target);
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Initialisation des services avec l'instance 'app' explicite
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Logique d'authentification
+            const initAuth = async () => {
+                try {
+                    // On force la connexion anonyme avec cette config spécifique
+                    await signInAnonymously(auth);
+                } catch (e) {
+                    lastError = e.code || e.message;
+                    console.error("Erreur Auth:", e);
+                    updateConnectionStatus(false, lastError);
                 }
-            }, 1000);
+            };
+            
+            initAuth();
+
+            onAuthStateChanged(auth, (u) => {
+                user = u;
+                if (user) {
+                    console.log("Connecté à Firebase avec succès (UID: " + user.uid + ")");
+                    updateConnectionStatus(true);
+                    subscribeToRoadmap();
+                } else {
+                    // Si on n'est pas connecté et qu'il n'y a pas d'erreur explicite encore
+                    if (!lastError) updateConnectionStatus(false, "En attente de connexion...");
+                }
+            });
+
+        } catch (err) {
+            console.error("Erreur d'initialisation Firebase globale:", err);
+            lastError = err.message;
+            updateConnectionStatus(false, err.message);
         }
+
 
         // --- KANBAN LOGIC ---
         const axes = [
@@ -1972,7 +1945,14 @@
                                         </div>
                                     ` : ''}
 
-                                    ${(obj.notes && obj.notes.length > 0) ? `<div class="mt-2 pt-1 text-[9px] text-blue-600 flex items-center gap-1 justify-end"><i data-lucide="message-circle" class="w-3 h-3"></i> ${obj.notes.length} note(s)</div>` : ''}
+                                    <div class="flex justify-between items-end mt-2">
+                                        <!-- INDICATEUR AJOUTER ACTION -->
+                                         <div class="text-[10px] text-dix-light font-oswald uppercase tracking-wider flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                            <i data-lucide="plus-circle" class="w-3 h-3"></i> Action / Note
+                                        </div>
+
+                                        ${(obj.notes && obj.notes.length > 0) ? `<div class="text-[9px] text-blue-600 flex items-center gap-1"><i data-lucide="message-circle" class="w-3 h-3"></i> ${obj.notes.length} note(s)</div>` : ''}
+                                    </div>
                                 </div>
                             `}).join('')}
                             
@@ -2107,17 +2087,7 @@
 
         // Add Action Logic
         btnAddAction.addEventListener('click', async () => {
-            if (!db) { alert("Erreur : Non connecté à la base de données."); return; }
-            if (!user) {
-                console.log("Utilisateur non connecté, tentative de reconnexion anonyme...");
-                try {
-                    await signInAnonymously(auth);
-                } catch (e) {
-                    console.error("Echec reconnexion:", e);
-                    alert("Impossible de vous reconnecter. Vérifiez votre connexion.");
-                    return;
-                }
-            }
+            if (!db || !user || !currentDetailId) { alert("Erreur : Non connecté à la base de données."); return; }
 
             const title = document.getElementById('action-title').value;
             const means = document.getElementById('action-means').value;
@@ -2158,11 +2128,7 @@
 
         // Add Note Logic
         btnAddNote.addEventListener('click', async () => {
-            if (!db) { alert("Erreur : Non connecté à la base de données."); return; }
-            if (!user) {
-                try { await signInAnonymously(auth); } 
-                catch (e) { alert("Erreur connexion: " + e.message); return; }
-            }
+            if (!db || !user || !currentDetailId) { alert("Erreur : Non connecté à la base de données."); return; }
 
             const author = document.getElementById('note-author').value;
             const text = document.getElementById('note-text').value;
