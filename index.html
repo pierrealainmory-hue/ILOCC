@@ -1780,41 +1780,86 @@
         import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- FIREBASE CONFIGURATION ---
-        // NOTE: In the Canvas environment, use global variables.
-        // For external use, replace 'configFromEnv' with your actual firebaseConfig object.
+        // --- CONFIGURATION FIREBASE ---
+        // Pour activer la sauvegarde en ligne et collaborative :
+        // 1. Allez sur https://console.firebase.google.com/
+        // 2. Créez un projet et ajoutez une "Web App"
+        // 3. Activez "Firestore Database" (Mode Test pour commencer)
+        // 4. Activez "Authentication" (Fournisseur "Anonyme")
+        // 5. Copiez la configuration (apiKey, authDomain, etc.) ci-dessous dans 'manualConfig'
+        
+        const manualConfig = {
+            apiKey: "AIzaSyDZkwWnd2llryuaYpeNppXEqjlbk11GvrE",
+            authDomain: "ilocc-1b57d.firebaseapp.com",
+            projectId: "ilocc-1b57d",
+            storageBucket: "ilocc-1b57d.firebasestorage.app",
+            messagingSenderId: "653444870972",
+            appId: "1:653444870972:web:6942083028df18b2cea439"
+        };
+
+        // Configuration automatique (Environnement de démo) ou Manuelle (Votre projet)
         const configFromEnv = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        // Si manualConfig a une clé apiKey, on l'utilise, sinon on cherche la config d'environnement
+        const firebaseConfig = (manualConfig.apiKey) ? manualConfig : configFromEnv;
+        
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ilocc-preview';
         
         let db;
         let auth;
         let user;
 
-        if (configFromEnv) {
-            const app = initializeApp(configFromEnv);
-            db = getFirestore(app);
-            auth = getAuth(app);
+        if (firebaseConfig) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
 
-            // Auth Logic
-            const initAuth = async () => {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            };
-            initAuth();
+                // Auth Logic
+                const initAuth = async () => {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                };
+                initAuth();
 
-            onAuthStateChanged(auth, (u) => {
-                user = u;
-                if (user) {
-                    subscribeToRoadmap();
-                }
-            });
+                onAuthStateChanged(auth, (u) => {
+                    user = u;
+                    if (user) {
+                        // console.log("Connecté à Firebase:", user.uid);
+                        subscribeToRoadmap();
+                    }
+                });
+            } catch (err) {
+                console.error("Erreur d'initialisation Firebase. Vérifiez votre configuration manualConfig.", err);
+            }
         } else {
-            console.warn("Firebase config not found. Roadmap will not persist.");
+            console.warn("Aucune configuration Firebase trouvée. Mode lecture seule / local.");
             // Render empty state if no config
             setTimeout(() => renderKanban([]), 500); 
+            
+            // Affiche un bandeau d'alerte pour guider l'utilisateur
+            setTimeout(() => {
+                const roadmapTab = document.getElementById('tab-roadmap');
+                if(roadmapTab) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = "bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 mb-4 text-sm font-georgia flex items-center justify-between";
+                    alertDiv.innerHTML = `
+                        <div>
+                            <p class='font-bold font-oswald uppercase'>Mode Déconnecté</p>
+                            <p>La base de données n'est pas connectée. Vos modifications ne seront pas sauvegardées.</p>
+                            <p class='text-xs mt-1'>Pour activer la sauvegarde : Configurez <code>manualConfig</code> dans le code source (bas de page).</p>
+                        </div>
+                        <i data-lucide="database-off" class="w-6 h-6 opacity-50"></i>
+                    `;
+                    // Insert after the header
+                    const container = roadmapTab.querySelector('.flex-col');
+                    const target = roadmapTab.querySelector('.min-h-0');
+                    if (container && target) container.insertBefore(alertDiv, target);
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+            }, 1000);
         }
 
         // --- KANBAN LOGIC ---
