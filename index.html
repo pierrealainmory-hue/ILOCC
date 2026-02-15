@@ -1781,6 +1781,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- CONFIGURATION FIREBASE ---
+        // Configuration nettoyée et insérée manuellement
         const manualConfig = {
             apiKey: "AIzaSyDZkwWnd2llryuaYpeNppXEqjlbk11GvrE",
             authDomain: "ilocc-1b57d.firebaseapp.com",
@@ -1790,7 +1791,102 @@
             appId: "1:653444870972:web:6942083028df18b2cea439"
         };
 
-        // KANBAN LOGIC & AXES (Définis ici pour être utilisés immédiatement)
+        // Determine which config to use
+        let firebaseConfig = null;
+        let isManual = false;
+        
+        // 1. Try Manual Config first
+        if (manualConfig && manualConfig.apiKey && manualConfig.apiKey.length > 0) {
+            firebaseConfig = manualConfig;
+            isManual = true;
+            console.log("Utilisation de la configuration manuelle (Projet : " + manualConfig.projectId + ")");
+        } 
+        // 2. Try Environment Config if available and no manual config
+        else if (typeof __firebase_config !== 'undefined') {
+            try {
+                firebaseConfig = JSON.parse(__firebase_config);
+                console.log("Utilisation de la configuration environnement (__firebase_config).");
+            } catch (e) {
+                console.error("Erreur de parsing de __firebase_config", e);
+            }
+        }
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ilocc-preview';
+        
+        let db;
+        let auth;
+        let user;
+
+        if (firebaseConfig && firebaseConfig.apiKey) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Auth Logic
+                const initAuth = async () => {
+                    // SI CONFIGURATION MANUELLE : On force la connexion anonyme pour éviter les conflits de tokens
+                    if (isManual) {
+                        console.log("Connexion anonyme forcée (Config Manuelle détectée)...");
+                        await signInAnonymously(auth);
+                    } 
+                    // SINON (Environnement de démo) : On tente le token système
+                    else if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        try {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } catch(err) {
+                            console.warn("Echec du token custom, repli sur anonyme", err);
+                            await signInAnonymously(auth);
+                        }
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                };
+                
+                initAuth().catch(err => {
+                    console.error("Erreur critique d'authentification:", err);
+                    alert("Erreur de connexion à la base de données. Vérifiez la console.");
+                });
+
+                onAuthStateChanged(auth, (u) => {
+                    user = u;
+                    if (user) {
+                        console.log("Connecté à Firebase avec succès (UID: " + user.uid + ")");
+                        subscribeToRoadmap();
+                    }
+                });
+            } catch (err) {
+                console.error("Erreur d'initialisation Firebase. Vérifiez votre configuration manualConfig.", err);
+            }
+        } else {
+            console.warn("Aucune configuration Firebase trouvée. Mode lecture seule / local.");
+            // Render empty state if no config
+            setTimeout(() => renderKanban([]), 500); 
+            
+            // Affiche un bandeau d'alerte pour guider l'utilisateur
+            setTimeout(() => {
+                const roadmapTab = document.getElementById('tab-roadmap');
+                if(roadmapTab) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = "bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 mb-4 text-sm font-georgia flex items-center justify-between";
+                    alertDiv.innerHTML = `
+                        <div>
+                            <p class='font-bold font-oswald uppercase'>Mode Déconnecté</p>
+                            <p>La base de données n'est pas connectée. Vos modifications ne seront pas sauvegardées.</p>
+                            <p class='text-xs mt-1'>Pour activer la sauvegarde : Configurez <code>manualConfig</code> dans le code source (bas de page).</p>
+                        </div>
+                        <i data-lucide="database-off" class="w-6 h-6 opacity-50"></i>
+                    `;
+                    // Insert after the header
+                    const container = roadmapTab.querySelector('.flex-col');
+                    const target = roadmapTab.querySelector('.min-h-0');
+                    if (container && target) container.insertBefore(alertDiv, target);
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+            }, 1000);
+        }
+
+        // --- KANBAN LOGIC ---
         const axes = [
             { id: 1, title: "Coordination & Chef de File" },
             { id: 2, title: "Gouvernance Partagée" },
@@ -1801,13 +1897,28 @@
 
         let roadmapData = [];
 
-        // Fonction de rendu (exposée globalement pour être appelée si besoin)
+        function subscribeToRoadmap() {
+            if (!db || !user) return;
+            // Public path as per instructions: /artifacts/{appId}/public/data/roadmap
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'roadmap'));
+            
+            onSnapshot(q, (snapshot) => {
+                roadmapData = [];
+                snapshot.forEach((doc) => {
+                    roadmapData.push({ id: doc.id, ...doc.data() });
+                });
+                renderKanban(roadmapData);
+            }, (error) => {
+                console.error("Error fetching roadmap:", error);
+            });
+        }
+
         function renderKanban(items) {
             const board = document.getElementById('kanban-board');
             if (!board) return;
 
             board.innerHTML = axes.map(axis => {
-                // Si items est vide, on affiche juste la structure
+                // Si items est vide, on affiche juste la structure (évite écran blanc au chargement)
                 const axisObjs = items ? items.filter(i => parseInt(i.axisId) === axis.id && i.type === 'Objectif') : [];
                 
                 return `
@@ -1829,6 +1940,7 @@
                                     <h4 class="font-bold text-dix-dark text-sm leading-tight mb-2 font-oswald">${obj.title}</h4>
                                     <p class="text-xs text-gray-600 mb-2 font-georgia line-clamp-3">${obj.desc || ''}</p>
                                     
+                                    <!-- Embedded Actions List -->
                                     ${linkedActions.length > 0 ? `
                                         <div class="mt-2 pt-2 border-t border-gray-100">
                                             <span class="text-[9px] font-oswald uppercase text-gray-400 block mb-1">Actions :</span>
@@ -1853,7 +1965,10 @@
                 `;
             }).join('');
 
+            // Init Icons for injected HTML
             if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            // Re-attach handlers because innerHTML rewrite destroys them
             attachEventHandlers();
         }
 
@@ -1861,6 +1976,7 @@
             const board = document.getElementById('kanban-board');
             if (!board) return;
 
+            // Add Event Listeners for "Add" buttons
             board.querySelectorAll('.add-card-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -1869,6 +1985,7 @@
                 });
             });
 
+            // Add Event Listeners for "Delete" buttons
             board.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation(); 
@@ -1878,69 +1995,10 @@
                 });
             });
         }
-
-        // Rendu immédiat (vide) pour que la page s'affiche même si Firebase charge
-        renderKanban([]);
-        window.renderKanban = renderKanban; // Expose globalement
-
-        // --- FIREBASE INIT ---
-        let firebaseConfig = null;
-        let isManual = false;
         
-        if (manualConfig && manualConfig.apiKey) {
-            firebaseConfig = manualConfig;
-            isManual = true;
-        } else if (typeof __firebase_config !== 'undefined') {
-            try { firebaseConfig = JSON.parse(__firebase_config); } catch (e) {}
-        }
+        // Initial empty render to avoid blank screen while loading
+        renderKanban([]);
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ilocc-preview';
-        let db;
-        let auth;
-        let user;
-
-        if (firebaseConfig && firebaseConfig.apiKey) {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                const initAuth = async () => {
-                    if (isManual) {
-                        await signInAnonymously(auth);
-                    } else if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        try { await signInWithCustomToken(auth, __initial_auth_token); } 
-                        catch(err) { await signInAnonymously(auth); }
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                };
-                
-                initAuth().catch(err => console.error("Auth Error:", err));
-
-                onAuthStateChanged(auth, (u) => {
-                    user = u;
-                    if (user) {
-                        subscribeToRoadmap();
-                    }
-                });
-            } catch (err) {
-                console.error("Firebase Init Error:", err);
-            }
-        }
-
-        function subscribeToRoadmap() {
-            if (!db || !user) return;
-            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'roadmap'));
-            
-            onSnapshot(q, (snapshot) => {
-                roadmapData = [];
-                snapshot.forEach((doc) => {
-                    roadmapData.push({ id: doc.id, ...doc.data() });
-                });
-                renderKanban(roadmapData);
-            });
-        }
 
         // --- DETAILS & NOTES LOGIC ---
         let currentDetailId = null;
@@ -2030,7 +2088,7 @@
 
         // Add Action Logic
         btnAddAction.addEventListener('click', async () => {
-            if (!db || !user || !currentDetailId) return;
+            if (!db || !user || !currentDetailId) { alert("Erreur : Non connecté à la base de données."); return; }
 
             const title = document.getElementById('action-title').value;
             const means = document.getElementById('action-means').value;
@@ -2071,7 +2129,7 @@
 
         // Add Note Logic
         btnAddNote.addEventListener('click', async () => {
-            if (!db || !user || !currentDetailId) return;
+            if (!db || !user || !currentDetailId) { alert("Erreur : Non connecté à la base de données."); return; }
 
             const author = document.getElementById('note-author').value;
             const text = document.getElementById('note-text').value;
@@ -2130,7 +2188,11 @@
         }
 
         saveBtn.addEventListener('click', async () => {
-            if (!db || !user) return;
+            console.log("Tentative de sauvegarde..."); // Debug log
+            if (!db || !user) { 
+                alert("Erreur : Non connecté à la base de données. Vérifiez votre connexion internet ou la configuration."); 
+                return; 
+            }
 
             const axisId = document.getElementById('modal-axis-id').value;
             const title = document.getElementById('modal-title').value;
@@ -2151,10 +2213,11 @@
                     createdAt: new Date().toISOString(),
                     userId: user.uid
                 });
+                console.log("Sauvegarde réussie !");
                 modal.style.display = 'none';
             } catch (e) {
                 console.error("Error adding document: ", e);
-                alert("Erreur lors de l'enregistrement");
+                alert("Erreur lors de l'enregistrement : " + e.message);
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.textContent = 'Créer l\'objectif';
