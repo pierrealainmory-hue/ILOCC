@@ -1781,13 +1781,6 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- CONFIGURATION FIREBASE ---
-        // Pour activer la sauvegarde en ligne et collaborative :
-        // 1. Allez sur https://console.firebase.google.com/
-        // 2. Créez un projet et ajoutez une "Web App"
-        // 3. Activez "Firestore Database" (Mode Test pour commencer)
-        // 4. Activez "Authentication" (Fournisseur "Anonyme")
-        // 5. Copiez la configuration (apiKey, authDomain, etc.) ci-dessous dans 'manualConfig'
-        
         const manualConfig = {
             apiKey: "AIzaSyDZkwWnd2llryuaYpeNppXEqjlbk11GvrE",
             authDomain: "ilocc-1b57d.firebaseapp.com",
@@ -1797,18 +1790,31 @@
             appId: "1:653444870972:web:6942083028df18b2cea439"
         };
 
-        // Configuration automatique (Environnement de démo) ou Manuelle (Votre projet)
-        const configFromEnv = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        // Si manualConfig a une clé apiKey, on l'utilise, sinon on cherche la config d'environnement
-        const firebaseConfig = (manualConfig.apiKey) ? manualConfig : configFromEnv;
+        // Determine which config to use
+        let firebaseConfig = null;
         
+        // 1. Try Manual Config first
+        if (manualConfig && manualConfig.apiKey && manualConfig.apiKey.length > 0) {
+            firebaseConfig = manualConfig;
+            console.log("Utilisation de la configuration manuelle (manualConfig).");
+        } 
+        // 2. Try Environment Config if available and no manual config
+        else if (typeof __firebase_config !== 'undefined') {
+            try {
+                firebaseConfig = JSON.parse(__firebase_config);
+                console.log("Utilisation de la configuration environnement (__firebase_config).");
+            } catch (e) {
+                console.error("Erreur de parsing de __firebase_config", e);
+            }
+        }
+
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ilocc-preview';
         
         let db;
         let auth;
         let user;
 
-        if (firebaseConfig) {
+        if (firebaseConfig && firebaseConfig.apiKey) {
             try {
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -1919,7 +1925,7 @@
                                 <div class="roadmap-card group relative" onclick="openDetails('${obj.id}')">
                                     <div class="flex justify-between items-start mb-1">
                                         <span class="text-[10px] font-oswald uppercase tracking-wider text-dix-light">OBJECTIF</span>
-                                        ${configFromEnv ? `<button class="delete-btn opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500" data-id="${obj.id}">×</button>` : ''}
+                                        ${(user) ? `<button class="delete-btn opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500" data-id="${obj.id}">×</button>` : ''}
                                     </div>
                                     <h4 class="font-bold text-dix-dark text-sm leading-tight mb-2 font-oswald">${obj.title}</h4>
                                     
@@ -1957,7 +1963,7 @@
             board.querySelectorAll('.add-card-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (!configFromEnv) { alert("Base de données non configurée."); return; }
+                    if (!db) { alert("Base de données non configurée."); return; }
                     openModal(e.target.dataset.axis, e.target.dataset.axisname);
                 });
             });
