@@ -250,7 +250,7 @@
             width: 100%;
             height: 100%;
             background-color: var(--dix-dark);
-            z-index: 9999;
+            z-index: 10005; /* Max Z */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -409,6 +409,33 @@
             overflow: hidden; animation: slideUp 0.3s ease-out;
         }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* TUTORIAL STYLES */
+        .tour-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); z-index: 10000;
+            transition: opacity 0.3s;
+        }
+        .tour-target {
+            position: relative; z-index: 10002 !important;
+            background: white; border-radius: 4px;
+            box-shadow: 0 0 0 4px rgba(84, 158, 57, 0.8);
+        }
+        .tour-tooltip {
+            position: fixed; z-index: 10005; /* Always on top */
+            background: white; color: #333;
+            padding: 16px; border-radius: 8px;
+            width: 280px; box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            border-left: 4px solid var(--dix-light);
+            animation: fadeIn 0.3s ease-out;
+        }
+        .tour-tooltip h4 { font-family: 'Oswald', sans-serif; font-size: 1.1rem; color: var(--dix-dark); margin-bottom: 8px; }
+        .tour-tooltip p { font-family: 'Georgia', serif; font-size: 0.9rem; line-height: 1.4; color: #555; }
+        .tour-nav { display: flex; justify-content: flex-end; margin-top: 12px; gap: 8px; }
+        .tour-btn { padding: 4px 12px; font-size: 0.75rem; text-transform: uppercase; font-family: 'Oswald'; border-radius: 4px; cursor: pointer; }
+        .tour-btn-next { background: var(--dix-light); color: white; }
+        .tour-btn-skip { color: #888; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -737,7 +764,7 @@
                     <div style="grid-row: 4; grid-column: 3;"></div>
                     <div style="grid-row: 4; grid-column: 4;"></div>
                     <div class="aval-block flex items-center" style="grid-row: 4; grid-column: 5;">
-                        <div onclick="selectAndGo(9)" class="node-base w-full border-blue-300 is-interpro-member text-center"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩</div><span class="font-bold text-[14px] uppercase font-oswald text-center leading-tight">ASSOC. CAPRAGHJI</span><p class="key-term text-center text-[11px] leading-tight">IGP Cabri</p></div>
+                        <div onclick="selectAndGo(9)" class="node-base w-full border-blue-300 is-interpro-member text-center"><span class="member-indicator">★</span><div class="actor-icon-strip">🥩</div><span class="font-bold text-[15px] uppercase font-oswald text-center leading-tight">ASSOC. CAPRAGHJI</span><p class="key-term text-center text-[11px] leading-tight">IGP Cabri</p></div>
                     </div>
                     <div class="aval-block flex items-center" style="grid-row: 4; grid-column: 6;">
                         <div onclick="selectAndGo(9)" class="node-base w-full border-blue-300 text-center is-interpro-member"><span class="member-indicator">★</span><div class="actor-icon-strip">🐐</div><span class="font-bold text-[14px] uppercase font-black text-blue-900 font-oswald text-center leading-tight">ASSOC. CAPRAGHJI</span><p class="key-term text-blue-700 text-center text-[11px] leading-tight">Promotion</p></div>
@@ -877,6 +904,9 @@
                     </div>
                     <div class="flex flex-col items-end gap-1">
                         <div class="flex gap-2">
+                            <button onclick="runTour()" id="btn-tuto" class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded hover:bg-amber-200 flex items-center gap-1 font-oswald uppercase transition-colors" title="Comment ça marche ?">
+                                <i data-lucide="wand-2" class="w-3 h-3"></i> Tuto
+                            </button>
                             <div id="connection-status" class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded flex items-center gap-1 font-oswald uppercase">
                                 <span class="w-2 h-2 rounded-full bg-gray-400"></span> Déconnecté
                             </div>
@@ -2044,6 +2074,129 @@
             detailsModal.style.display = 'none';
             currentDetailId = null;
         }
+        
+        // --- TUTORIAL LOGIC ---
+        window.runTour = function() {
+            const steps = [
+                {
+                    target: null, // Center screen
+                    title: "Bienvenue sur la Feuille de Route",
+                    text: "Cet outil collaboratif vous permet de définir ensemble les objectifs stratégiques et les actions opérationnelles de l'ILOCC pour 2026."
+                },
+                {
+                    target: '.roadmap-col:first-child', // First Column
+                    title: "Les Axes Stratégiques",
+                    text: "La feuille de route est organisée en 5 colonnes correspondant aux 5 axes majeurs de la vision."
+                },
+                {
+                    target: '.add-card-btn', // Add Button
+                    title: "Ajouter un Objectif",
+                    text: "Cliquez sur ce bouton en bas de chaque colonne pour créer un nouvel objectif stratégique (le 'Quoi')."
+                },
+                {
+                    target: '.roadmap-card', // A Card (if exists) or fallback
+                    fallbackTarget: '.add-card-btn', 
+                    title: "Détails & Actions",
+                    text: "Cliquez sur une carte existante pour ouvrir sa fiche détaillée. C'est là que vous pourrez ajouter des ACTIONS concrètes (le 'Comment') et des notes."
+                },
+                {
+                    target: '#btn-export-pdf', // Export buttons
+                    title: "Exporter",
+                    text: "À tout moment, vous pouvez exporter le plan d'action complet en PDF ou Excel pour vos comptes-rendus."
+                }
+            ];
+
+            let currentStep = 0;
+            
+            // Create Overlay Elements if not exist
+            let overlay = document.querySelector('.tour-backdrop');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'tour-backdrop';
+                document.body.appendChild(overlay);
+                
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tour-tooltip';
+                tooltip.innerHTML = `
+                    <h4 id="tour-title"></h4>
+                    <p id="tour-text"></p>
+                    <div class="tour-nav">
+                        <button class="tour-btn tour-btn-skip" onclick="endTour()">Fermer</button>
+                        <button class="tour-btn tour-btn-next" onclick="nextTourStep()">Suivant</button>
+                    </div>
+                `;
+                document.body.appendChild(tooltip);
+            }
+
+            // Expose control functions
+            window.endTour = function() {
+                document.querySelector('.tour-backdrop').style.display = 'none';
+                document.querySelector('.tour-tooltip').style.display = 'none';
+                // Remove highlights
+                document.querySelectorAll('.tour-target').forEach(el => {
+                    el.classList.remove('tour-target');
+                    el.style.zIndex = '';
+                });
+            };
+
+            window.nextTourStep = function() {
+                currentStep++;
+                if (currentStep >= steps.length) {
+                    endTour();
+                } else {
+                    showStep(currentStep);
+                }
+            };
+
+            function showStep(index) {
+                const step = steps[index];
+                const tooltip = document.querySelector('.tour-tooltip');
+                const backdrop = document.querySelector('.tour-backdrop');
+                
+                // Reset previous highlights
+                document.querySelectorAll('.tour-target').forEach(el => {
+                    el.classList.remove('tour-target');
+                    el.style.zIndex = '';
+                });
+
+                // Update text
+                document.getElementById('tour-title').innerText = step.title;
+                document.getElementById('tour-text').innerText = step.text;
+                
+                // Show layers
+                backdrop.style.display = 'block';
+                tooltip.style.display = 'block';
+
+                // --- NOUVELLE LOGIQUE : CENTRAGE SYSTÉMATIQUE ---
+                // On place la bulle au centre de l'écran quoi qu'il arrive
+                tooltip.style.top = '50%';
+                tooltip.style.left = '50%';
+                tooltip.style.transform = 'translate(-50%, -50%)';
+                tooltip.style.position = 'fixed';
+
+                // Gestion de la cible (Highlight uniquement)
+                if (step.target) {
+                    let targetEl = document.querySelector(step.target);
+                    // Fallback logic if specific target (like a card) doesn't exist yet
+                    if (!targetEl && step.fallbackTarget) {
+                        targetEl = document.querySelector(step.fallbackTarget);
+                    }
+
+                    if (targetEl) {
+                        // On fait défiler la page pour que l'élément soit visible derrière la modale
+                        targetEl.scrollIntoView({block: "center", inline: "center", behavior: "smooth"});
+
+                        // On met l'élément en surbrillance (z-index élevé)
+                        targetEl.classList.add('tour-target');
+                        targetEl.style.zIndex = '10002'; // Au-dessus du backdrop
+                    }
+                }
+            }
+
+            // Start
+            showStep(0);
+        };
+
 
         function renderActionsList(actions) {
             if (!actions || actions.length === 0) {
