@@ -242,65 +242,6 @@
             transition: width 1.5s ease-in-out;
         }
         
-        /* LOGIN OVERLAY STYLES */
-        #login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--dix-dark);
-            z-index: 10005; /* Max Z */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-        }
-        
-        .login-box {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 4px;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-        
-        .login-input {
-            width: 100%;
-            padding: 10px;
-            margin: 15px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-family: 'Georgia', serif;
-        }
-        
-        .login-btn {
-            background-color: var(--dix-light);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: 'Oswald', sans-serif;
-            text-transform: uppercase;
-            font-weight: 500;
-            width: 100%;
-            transition: background-color 0.2s;
-        }
-        
-        .login-btn:hover {
-            background-color: #468c2f;
-        }
-        
-        .error-msg {
-            color: #d32f2f;
-            font-size: 0.8rem;
-            margin-top: 10px;
-            display: none;
-        }
-
         /* --- KANBAN / ROADMAP STYLES --- */
         .roadmap-container {
             display: flex;
@@ -440,21 +381,6 @@
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <!-- LOGIN OVERLAY -->
-    <div id="login-overlay">
-        <div class="login-box">
-            <div class="mb-4 flex justify-center">
-                <!-- Using an image tag for the logo -->
-                <img src="https://custom-images.strikinglycdn.com/res/hrscywv4p/image/upload/c_limit,fl_lossy,h_300,w_300,f_auto,q_auto/1094382/568385_347809.png" alt="Logo" class="w-16 h-16 object-contain">
-            </div>
-            <h2 class="font-oswald text-xl text-dix-dark mb-2 uppercase">Accès Restreint</h2>
-            <p class="text-sm text-gray-500 mb-4 font-georgia">Veuillez entrer le mot de passe pour accéder à la restitution.</p>
-            <input type="password" id="password-input" class="login-input" placeholder="Mot de passe">
-            <button onclick="checkPassword()" class="login-btn">Entrer</button>
-            <p id="login-error" class="error-msg font-georgia">Mot de passe incorrect</p>
-        </div>
-    </div>
-
     <!-- HEADER & NAVIGATION -->
     <header class="bg-dix-dark text-dix-white flex-none shadow-md z-20 flex flex-col xl:flex-row items-center justify-between border-b border-dix-light">
         
@@ -472,7 +398,6 @@
 
                 <div class="ml-1 xl:ml-2 flex-shrink-0">
                     <h1 class="font-oswald uppercase text-sm xl:text-xl tracking-wide leading-none">Commission Stratégie et gouvernance de L'ILOCC</h1>
-                    <p class="text-[10px] font-georgia italic opacity-70 mt-0.5">restitution atelier #1 _ Rôle de L'ILOCC </p>
                 </div>
             </div>
             
@@ -500,11 +425,11 @@
                 <button onclick="switchTab('vision')" id="nav-vision" class="nav-tab h-full px-3 xl:px-6 flex items-center gap-2 font-oswald uppercase tracking-wider text-xs xl:text-sm">
                     <i data-lucide="eye" class="w-4 h-4"></i> Vision
                 </button>
-                <button onclick="switchTab('restitution')" id="nav-restitution" class="nav-tab h-full px-3 xl:px-6 flex items-center gap-2 font-oswald uppercase tracking-wider text-xs xl:text-sm border-l border-dix-light/30">
-                    <i data-lucide="map" class="w-4 h-4"></i> Bilan Action
+                <button onclick="switchTab('roadmap')" id="nav-roadmap" class="nav-tab h-full px-3 xl:px-6 flex items-center gap-2 font-oswald uppercase tracking-wider text-xs xl:text-sm border-l border-dix-light/30">
+                    <i data-lucide="kanban" class="w-4 h-4"></i> Atelier #2
                 </button>
-                <button onclick="switchTab('roadmap')" id="nav-roadmap" class="nav-tab h-full px-3 xl:px-6 flex items-center gap-2 font-oswald uppercase tracking-wider text-xs xl:text-sm text-gray-400">
-                    <i data-lucide="kanban" class="w-4 h-4"></i> Outil
+                <button onclick="switchTab('restitution')" id="nav-restitution" class="nav-tab h-full px-3 xl:px-6 flex items-center gap-2 font-oswald uppercase tracking-wider text-xs xl:text-sm">
+                    <i data-lucide="map" class="w-4 h-4"></i> Bilan Action
                 </button>
             </nav>
         </div>
@@ -519,7 +444,6 @@
 
     <!-- MODAL ADD OBJECTIVE (ROADMAP) -->
     <div id="roadmap-modal" class="modal-overlay">
-        <!-- ... existing modal code ... -->
         <div class="modal-content flex flex-col">
             <div class="p-4 border-b border-[#549e39] bg-[#f3f3f3] flex justify-between items-center">
                 <h3 class="font-oswald uppercase text-lg text-dix-dark">Définir un Objectif</h3>
@@ -549,7 +473,6 @@
 
     <!-- MODAL DETAILS & ACTIONS -->
     <div id="details-modal" class="modal-overlay">
-        <!-- ... existing modal code ... -->
         <div class="modal-content flex flex-col h-[85vh] max-w-3xl"> <!-- Taller and Wider modal -->
             <div class="p-4 border-b border-[#549e39] bg-[#f3f3f3] flex justify-between items-center">
                 <h3 class="font-oswald uppercase text-lg text-dix-dark">Fiche Objectif</h3>
@@ -580,13 +503,16 @@
                     </div>
                 </div>
 
+                <!-- Comments Section -->
                 <div class="mt-8 pt-6 border-t border-gray-200">
                     <h4 class="font-oswald uppercase text-sm text-dix-dark mb-4 flex items-center gap-2">
                         <i data-lucide="message-square-plus" class="w-4 h-4 text-gray-400"></i>
                         Notes & Compléments
                     </h4>
                     
-                    <div id="notes-list" class="space-y-3 mb-6"></div>
+                    <div id="notes-list" class="space-y-3 mb-6">
+                        <!-- Notes injected here -->
+                    </div>
 
                     <div class="bg-gray-50 p-4 rounded border border-gray-200">
                         <input type="text" id="note-author" class="w-full p-2 mb-2 border border-gray-300 rounded text-sm font-georgia" placeholder="Votre Nom / Structure">
@@ -602,7 +528,6 @@
 
     <!-- MODAL LEXIQUE (Global) -->
     <div id="lexicon-modal" class="fixed inset-0 z-50 bg-[#405F59] bg-opacity-50 backdrop-blur-sm hidden items-center justify-center p-4">
-        <!-- ... existing lexicon code ... -->
         <div class="bg-white shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col border border-dix-dark">
             <div class="p-4 border-b border-[#549e39] flex justify-between items-center bg-[#f3f3f3]">
                 <h3 class="font-oswald uppercase text-xl flex items-center gap-2 text-dix-dark font-normal">
@@ -625,7 +550,6 @@
         
         <!-- ONGLET 1: ACTEURS -->
         <div id="tab-acteurs" class="tab-pane absolute inset-0 flex">
-            <!-- SIDEBAR ACTEURS -->
             <div class="w-1/3 min-w-[300px] bg-white border-r border-[#549e39]/30 flex flex-col shadow-sm z-10">
                 <div class="p-6 border-b border-[#549e39]/30 bg-[#f3f3f3]">
                     <div class="flex justify-between items-start">
@@ -673,7 +597,6 @@
 
         <!-- ONGLET 3: FILIÈRE -->
         <div id="tab-filiere" class="tab-pane absolute inset-0 hidden overflow-auto p-8 bg-[#fdfbf7]">
-             <!-- Modification ici : min-h-full pour permettre l'expansion et grand padding-bottom (pb-48) -->
              <div class="space-y-12 min-h-full pb-48"> 
                 <div class="flex justify-center">
                     <div class="flex flex-col items-center text-center">
@@ -1092,28 +1015,6 @@
             lucide.createIcons();
         }
 
-        // --- PASSWORD PROTECTION ---
-        document.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('ilocc_auth_success') === 'true') {
-                document.getElementById('login-overlay').style.display = 'none';
-            }
-        });
-
-        function checkPassword() {
-            const password = document.getElementById('password-input').value;
-            const errorMsg = document.getElementById('login-error');
-            if(password === "ILOCC2026") {
-                localStorage.setItem('ilocc_auth_success', 'true');
-                document.getElementById('login-overlay').style.display = 'none';
-            } else {
-                errorMsg.style.display = 'block';
-            }
-        }
-
-        document.getElementById('password-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') checkPassword();
-        });
-
         // --- DATA (ENRICHED WITH CATEGORY & TAGS FOR ANALYSIS) ---
         const lexiconData = [
             { term: "AOP", def: "Appellation d'Origine Protégée. Signe européen garantissant qu'un produit est réalisé selon un savoir-faire reconnu dans une même zone géographique (ex: Brocciu)." },
@@ -1385,7 +1286,7 @@
                 "En tant qu’éleveur, nous attendons que l’ILOCC coordonne",
                 "Garant de la production et de la qualité",
                 "L’ILOCC doit être l’entité qui porte les besoins de la profession et en retour apporte des solutions",
-                "Avec l'ilocc, le but est de développer / pérennité de la filière caprine",
+                "Avec l'ilocc, le but est de développer / pépérennité de la filière caprine",
                 "Avoir un lien avec toutes les structures dans le but d'avoir une vision globale de la situation et savoir quels leviers actionner pour conserver, améliorer et dynamiser la filière"
                 ],
                 attentesTags: [
