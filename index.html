@@ -377,12 +377,165 @@
         .tour-btn-next { background: var(--dix-light); color: white; }
         .tour-btn-skip { color: #888; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* =========================================
+           STYLES DÉDIÉS À L'IMPRESSION (PDF & PRINT)
+           ========================================= */
+        @media print {
+            /* --- Page de Garde --- */
+            .print-cover {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                height: 100vh !important;
+                max-height: 100vh !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                background-color: white !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 2rem !important;
+                margin: 0 !important;
+            }
+
+            /* 1. Préservation stricte des couleurs (fonds et bordures) */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* 2. Forcer le fond blanc et réinitialiser les conteneurs stricts */
+            body, html, main {
+                background-color: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                display: block !important;
+            }
+
+            /* 3. Déverrouiller TOUS les onglets pour le mode flux continu */
+            #tab-acteurs, 
+            #tab-matrice, 
+            #tab-filiere, 
+            #tab-attentes, 
+            #tab-vision, 
+            #tab-restitution {
+                display: block !important;
+                visibility: visible !important;
+                position: relative !important;
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                opacity: 1 !important;
+                padding: 0 !important;
+                margin-bottom: 3rem !important; /* Espacement de sécurité entre onglets */
+            }
+
+            /* 4. Masquer explicitement l'onglet Kanban, les UI et les modales */
+            #tab-roadmap, .tour-backdrop, .tour-tooltip {
+                display: none !important;
+            }
+
+            /* 5. Gérer les sauts de page avant chaque onglet */
+            .print-section {
+                page-break-before: always !important;
+                break-before: page !important;
+                padding-top: 1rem !important;
+            }
+            .print-section:first-of-type {
+                page-break-before: auto !important;
+                break-before: auto !important;
+            }
+
+            /* 6. Protéger les blocs (cartes, tableaux) des coupures en plein milieu */
+            .print-card, tr, .node-base, .bg-white.rounded, .obj-block {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            /* 7. Comportement des Canvas (Chart.js) pour éviter qu'ils ne débordent */
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 8. Sécurité globale : désactiver TOUS les scrollbars internes et contraintes de hauteur */
+            div, .overflow-y-auto, .overflow-x-auto, .overflow-auto, .overflow-hidden, .flex-1 {
+                overflow: visible !important;
+                max-height: none !important;
+                height: auto !important;
+            }
+
+            /* --- Ajustements spécifiques pour #tab-acteurs --- */
+            #tab-acteurs {
+                flex-direction: column !important;
+            }
+            #main-content {
+                width: 100% !important;
+                padding: 0 !important;
+                background-color: white !important;
+            }
+
+            /* --- Ajustements spécifiques pour la matrice (Corriger les Sticky) --- */
+            .matrix-container {
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .matrix-container th, .matrix-container td {
+                position: static !important; /* Retire le sticky qui casse le PDF */
+                border: 1px solid #e5e7eb !important;
+            }
+            .matrix-container th {
+                color: black !important;
+                background-color: #f3f3f3 !important;
+            }
+            .roadmap-header {
+                position: static !important;
+            }
+
+            /* ==============================================================
+               MODE IMPRESSION SPÉCIFIQUE (Pour le bouton de l'onglet Restitution)
+               ============================================================== */
+            body.print-only-restitution #tab-acteurs,
+            body.print-only-restitution #tab-matrice,
+            body.print-only-restitution #tab-filiere,
+            body.print-only-restitution #tab-attentes,
+            body.print-only-restitution #tab-vision {
+                display: none !important; /* Masque tous les autres onglets */
+            }
+            
+            body.print-only-restitution #tab-restitution {
+                page-break-before: auto !important; /* Retire le saut de page forcé du début car il vient après la page de garde */
+                padding-top: 0 !important;
+            }
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <!-- HEADER & NAVIGATION -->
-    <header class="bg-dix-dark text-dix-white flex-none shadow-md z-20 flex flex-col xl:flex-row items-center justify-between border-b border-dix-light">
+    <!-- PAGE DE GARDE POUR L'IMPRESSION (Masquée à l'écran, affichée en PDF) -->
+    <div class="hidden print-cover">
+        <div class="flex items-center justify-center gap-12 mb-16">
+            <div class="bg-white rounded-full flex items-center justify-center w-40 h-40 shadow-sm border border-gray-100 p-3 overflow-hidden">
+                <img src="https://custom-images.strikinglycdn.com/res/hrscywv4p/image/upload/c_limit,fl_lossy,h_300,w_300,f_auto,q_auto/1094382/568385_347809.png" alt="Logo ILOCC" class="w-full h-full object-contain">
+            </div>
+            <div class="bg-white p-4 rounded-sm h-32 flex items-center shadow-sm border border-gray-100">
+                <img src="https://s1.qwant.com/thumbr/474x149/a/b/08bbfa8f31ba6f41a07653b19db7702132086cd9d82d095bd955a0eee95a72/OIP.8CeO6ec9tpxlNWfRlPzXrAHaCV.jpg?u=https%3A%2F%2Ftse.mm.bing.net%2Fth%2Fid%2FOIP.8CeO6ec9tpxlNWfRlPzXrAHaCV%3Fpid%3DApi&q=0&b=1&p=0&a=0" alt="Partenaire" class="h-full w-auto object-contain">
+            </div>
+        </div>
+        <h1 class="font-oswald uppercase text-4xl text-center text-dix-dark tracking-widest leading-snug mb-8">
+            Commission Stratégie et<br>gouvernance de L'ILOCC
+        </h1>
+        <div class="w-24 h-1.5 bg-[#549e39] mb-8 rounded-full"></div>
+        <h2 class="font-georgia text-2xl text-dix-dark opacity-60 italic">Document de Restitution</h2>
+    </div>
+
+    <!-- HEADER & NAVIGATION (Masqué à l'impression via print:hidden) -->
+    <header class="bg-dix-dark text-dix-white flex-none shadow-md z-20 flex flex-col xl:flex-row items-center justify-between border-b border-dix-light print:hidden">
         
         <!-- TOP/LEFT SECTION: Logos & Title -->
         <div class="flex items-center justify-between w-full xl:w-auto px-6 py-3 xl:py-0 xl:h-16 flex-shrink-0">
@@ -442,8 +595,8 @@
         </div>
     </header>
 
-    <!-- MODAL ADD OBJECTIVE (ROADMAP) -->
-    <div id="roadmap-modal" class="modal-overlay">
+    <!-- MODAL ADD OBJECTIVE (ROADMAP) (Masqué à l'impression) -->
+    <div id="roadmap-modal" class="modal-overlay print:hidden">
         <div class="modal-content flex flex-col">
             <div class="p-4 border-b border-[#549e39] bg-[#f3f3f3] flex justify-between items-center">
                 <h3 class="font-oswald uppercase text-lg text-dix-dark">Définir un Objectif</h3>
@@ -471,8 +624,8 @@
         </div>
     </div>
 
-    <!-- MODAL DETAILS & ACTIONS -->
-    <div id="details-modal" class="modal-overlay">
+    <!-- MODAL DETAILS & ACTIONS (Masqué à l'impression) -->
+    <div id="details-modal" class="modal-overlay print:hidden">
         <div class="modal-content flex flex-col h-[85vh] max-w-3xl"> <!-- Taller and Wider modal -->
             <div class="p-4 border-b border-[#549e39] bg-[#f3f3f3] flex justify-between items-center">
                 <h3 class="font-oswald uppercase text-lg text-dix-dark">Fiche Objectif</h3>
@@ -526,8 +679,8 @@
         </div>
     </div>
 
-    <!-- MODAL LEXIQUE (Global) -->
-    <div id="lexicon-modal" class="fixed inset-0 z-50 bg-[#405F59] bg-opacity-50 backdrop-blur-sm hidden items-center justify-center p-4">
+    <!-- MODAL LEXIQUE (Global) (Masqué à l'impression) -->
+    <div id="lexicon-modal" class="fixed inset-0 z-50 bg-[#405F59] bg-opacity-50 backdrop-blur-sm hidden items-center justify-center p-4 print:hidden">
         <div class="bg-white shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col border border-dix-dark">
             <div class="p-4 border-b border-[#549e39] flex justify-between items-center bg-[#f3f3f3]">
                 <h3 class="font-oswald uppercase text-xl flex items-center gap-2 text-dix-dark font-normal">
@@ -548,9 +701,10 @@
     <!-- MAIN CONTAINER FOR TABS -->
     <div class="flex-1 relative overflow-hidden bg-dix-white">
         
-        <!-- ONGLET 1: ACTEURS -->
-        <div id="tab-acteurs" class="tab-pane absolute inset-0 flex">
-            <div class="w-1/3 min-w-[300px] bg-white border-r border-[#549e39]/30 flex flex-col shadow-sm z-10">
+        <!-- ONGLET 1: ACTEURS (Ajout de print-section) -->
+        <div id="tab-acteurs" class="tab-pane absolute inset-0 flex print-section">
+            <!-- Sidebar list (masquée à l'impression pour ne pas polluer) -->
+            <div class="w-1/3 min-w-[300px] bg-white border-r border-[#549e39]/30 flex flex-col shadow-sm z-10 print:hidden">
                 <div class="p-6 border-b border-[#549e39]/30 bg-[#f3f3f3]">
                     <div class="flex justify-between items-start">
                         <div>
@@ -574,13 +728,14 @@
                 </div>
                 <div id="actor-list" class="flex-1 overflow-y-auto p-2 space-y-1 bg-white"></div>
             </div>
-            <div id="main-content" class="flex-1 overflow-y-auto bg-[#f3f3f3] p-8">
+            <!-- Main details content -->
+            <div id="main-content" class="flex-1 overflow-y-auto bg-[#f3f3f3] p-8 print-card">
                 <div class="h-full flex items-center justify-center text-dix-dark opacity-30 font-georgia italic">Sélectionnez une structure pour voir les détails</div>
             </div>
         </div>
 
-        <!-- ONGLET 2: MATRICE -->
-        <div id="tab-matrice" class="tab-pane absolute inset-0 hidden p-8 bg-[#fdfbf7] flex flex-col h-full overflow-hidden">
+        <!-- ONGLET 2: MATRICE (Ajout de print-section) -->
+        <div id="tab-matrice" class="tab-pane absolute inset-0 hidden p-8 bg-[#fdfbf7] flex flex-col h-full overflow-hidden print-section">
             <div class="mb-6 flex-none">
                 <h2 class="font-oswald text-3xl text-dix-dark uppercase font-normal tracking-wide">Matrice des Responsabilités</h2>
                 <p class="font-georgia text-dix-dark opacity-60 italic mt-1">Synthèse des positionnements des acteurs par grand domaine d'action</p>
@@ -595,8 +750,8 @@
             </div>
         </div>
 
-        <!-- ONGLET 3: FILIÈRE -->
-        <div id="tab-filiere" class="tab-pane absolute inset-0 hidden overflow-auto p-8 bg-[#fdfbf7]">
+        <!-- ONGLET 3: FILIÈRE (Ajout de print-section) -->
+        <div id="tab-filiere" class="tab-pane absolute inset-0 hidden overflow-auto p-8 bg-[#fdfbf7] print-section">
              <div class="space-y-12 min-h-full pb-48"> 
                 <div class="flex justify-center">
                     <div class="flex flex-col items-center text-center">
@@ -605,7 +760,7 @@
                             <span class="text-2xl font-oswald text-dix-dark leading-tight uppercase">ILOCC</span>
                             <p class="key-term text-[#549e39] font-bold uppercase text-[12px]">Gouvernance & Stratégie</p>
                         </div>
-                        <p class="text-[11px] text-[#549e39] mt-2 italic animate-pulse text-center font-georgia">Survolez l'ILOCC pour voir ses membres</p>
+                        <p class="text-[11px] text-[#549e39] mt-2 italic animate-pulse text-center font-georgia print:hidden">Survolez l'ILOCC pour voir ses membres</p>
                     </div>
                 </div>
                 <!-- Grille filière intégrée ici en JS ci-dessus -->
@@ -687,14 +842,14 @@
             </div>
         </div>
 
-        <!-- ONGLET ATTENTES -->
-        <div id="tab-attentes" class="tab-pane absolute inset-0 hidden overflow-auto p-8 bg-[#fdfbf7]">
+        <!-- ONGLET ATTENTES (Ajout de print-section) -->
+        <div id="tab-attentes" class="tab-pane absolute inset-0 hidden overflow-auto p-8 bg-[#fdfbf7] print-section">
             <div class="space-y-10 max-w-6xl mx-auto">
                 <div class="mb-6 flex-none border-l-4 border-[#549e39] pl-6 py-2">
                     <h2 class="font-oswald text-3xl text-dix-dark uppercase font-normal tracking-wide">Analyse des Attentes</h2>
                     <p class="font-georgia text-dix-dark opacity-60 italic mt-1">Synthèse détaillée et comparative des demandes exprimées par chaque acteur vis-à-vis de l'ILOCC.</p>
                 </div>
-                <div class="bg-white rounded border border-dix-light/30 p-6 shadow-sm">
+                <div class="bg-white rounded border border-dix-light/30 p-6 shadow-sm print-card">
                     <h3 class="font-oswald uppercase text-dix-dark text-sm tracking-widest mb-4 flex items-center gap-2">
                         <i data-lucide="tag" class="w-4 h-4 text-[#549e39]"></i> Mots-clés récurrents dans les attentes
                     </h3>
@@ -704,8 +859,8 @@
             </div>
         </div>
 
-        <!-- ONGLET VISION -->
-        <div id="tab-vision" class="tab-pane absolute inset-0 hidden overflow-auto p-8 bg-[#fdfbf7]">
+        <!-- ONGLET VISION (Ajout de print-section) -->
+        <div id="tab-vision" class="tab-pane absolute inset-0 hidden overflow-auto p-8 bg-[#fdfbf7] print-section">
             <div class="max-w-7xl mx-auto h-full flex flex-col">
                 <div class="mb-6 flex-none border-l-4 border-[#549e39] pl-6 py-2">
                     <h2 class="font-oswald text-3xl text-dix-dark uppercase font-normal tracking-wide">Vision Stratégique & Prospective</h2>
@@ -713,7 +868,7 @@
                 </div>
 
                 <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-0">
-                    <div class="bg-white border border-dix-light/30 shadow-sm p-6 flex flex-col items-center justify-center relative rounded-sm">
+                    <div class="bg-white border border-dix-light/30 shadow-sm p-6 flex flex-col items-center justify-center relative rounded-sm print-card">
                         <h3 class="font-oswald uppercase text-dix-dark text-sm tracking-widest mb-2 w-full text-left flex items-center gap-2">
                             <i data-lucide="radar" class="w-4 h-4 text-[#549e39]"></i> Cartographie des priorités
                         </h3>
@@ -723,7 +878,7 @@
                     </div>
                     <div class="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
                         <!-- Axe 1 -->
-                        <div class="bg-white p-5 border-l-4 border-[#549e39] shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-white p-5 border-l-4 border-[#549e39] shadow-sm hover:shadow-md transition-shadow print-card">
                             <div class="flex justify-between items-start">
                                 <h4 class="font-oswald uppercase text-lg text-dix-dark">1. Coordination & Chef de File</h4>
                                 <span class="text-xs font-bold text-[#549e39] bg-[#549e39]/10 px-2 py-1 rounded">Priorité #1</span>
@@ -733,28 +888,28 @@
                             </p>
                         </div>
                         <!-- Axe 2 -->
-                        <div class="bg-white p-5 border-l-4 border-dix-dark shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-white p-5 border-l-4 border-dix-dark shadow-sm hover:shadow-md transition-shadow print-card">
                             <h4 class="font-oswald uppercase text-lg text-dix-dark">2. Gouvernance Partagée</h4>
                             <p class="text-sm font-georgia text-dix-dark opacity-80 mt-2 leading-relaxed">
                                 Mise en place d'une prise de décision collégiale mais capable d'arbitrages fermes. Nécessité de structurer les collèges pour équilibrer les pouvoirs entre producteurs, transformateurs et institutionnels.
                             </p>
                         </div>
                         <!-- Axe 3 -->
-                        <div class="bg-white p-5 border-l-4 border-amber-600 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-white p-5 border-l-4 border-amber-600 shadow-sm hover:shadow-md transition-shadow print-card">
                             <h4 class="font-oswald uppercase text-lg text-dix-dark">3. Observatoire Économique</h4>
                             <p class="text-sm font-georgia text-dix-dark opacity-80 mt-2 leading-relaxed">
                                 Besoin crucial de transparence sur les données (volumes, prix, coûts de production). L'ILOCC doit devenir le tiers de confiance qui objective la réalité économique de la filière.
                             </p>
                         </div>
                         <!-- Axe 4 -->
-                        <div class="bg-white p-5 border-l-4 border-blue-600 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-white p-5 border-l-4 border-blue-600 shadow-sm hover:shadow-md transition-shadow print-card">
                             <h4 class="font-oswald uppercase text-lg text-dix-dark">4. Défense, Spécificité & Promotion</h4>
                             <p class="text-sm font-georgia text-dix-dark opacity-80 mt-2 leading-relaxed">
                                 Protection des races locales et des savoir-faire fermiers. Porter une voix unique auprès des instances nationales (INAO, Ministère) pour défendre les dérogations et adaptations nécessaires à la Corse.
                             </p>
                         </div>
                         <!-- Axe 5 -->
-                        <div class="bg-white p-5 border-l-4 border-purple-600 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-white p-5 border-l-4 border-purple-600 shadow-sm hover:shadow-md transition-shadow print-card">
                             <h4 class="font-oswald uppercase text-lg text-dix-dark">5. Veille Sanitaire & Qualité</h4>
                             <p class="text-sm font-georgia text-dix-dark opacity-80 mt-2 leading-relaxed">
                                 Assurer une veille réglementaire et sanitaire constante pour anticiper les crises (FCO, etc.) et garantir la qualité des produits laitiers corses, socle de la valeur ajoutée.
@@ -765,15 +920,16 @@
             </div>
         </div>
 
-        <!-- NOUVEL ONGLET 7: RESTITUTION STATIQUE (BILAN) -->
-        <div id="tab-restitution" class="tab-pane absolute inset-0 hidden overflow-auto p-8 bg-[#fdfbf7]">
+        <!-- ONGLET 7: RESTITUTION STATIQUE (BILAN) (Ajout de print-section) -->
+        <div id="tab-restitution" class="tab-pane absolute inset-0 hidden overflow-auto p-8 bg-[#fdfbf7] print-section">
             <div class="max-w-7xl mx-auto h-full flex flex-col">
                 <div class="mb-8 flex-none border-l-4 border-[#549e39] pl-6 py-2 flex justify-between items-end">
                     <div>
                         <h2 class="font-oswald text-3xl text-dix-dark uppercase font-normal tracking-wide">Bilan du Plan d'Action</h2>
                         <p class="font-georgia text-dix-dark opacity-60 italic mt-1">Synthèse figée des actions et objectifs validés, restructurée en 3 grands piliers.</p>
                     </div>
-                    <button onclick="window.print()" class="text-xs bg-dix-dark text-white px-3 py-1.5 rounded hover:bg-[#2c423e] flex items-center gap-2 font-oswald uppercase transition-colors shadow-sm">
+                    <!-- Modification : appel d'une fonction spécifique au lieu de window.print() -->
+                    <button onclick="printRestitutionOnly()" class="text-xs bg-dix-dark text-white px-3 py-1.5 rounded hover:bg-[#2c423e] flex items-center gap-2 font-oswald uppercase transition-colors shadow-sm print:hidden">
                         <i data-lucide="printer" class="w-4 h-4"></i> Imprimer
                     </button>
                 </div>
@@ -784,8 +940,8 @@
             </div>
         </div>
 
-        <!-- ONGLET 8: ROADMAP (OUTIL KANBAN CONNECTÉ) -->
-        <div id="tab-roadmap" class="tab-pane absolute inset-0 hidden overflow-hidden p-8 bg-[#fdfbf7]">
+        <!-- ONGLET 8: ROADMAP (OUTIL KANBAN CONNECTÉ) (Masqué entièrement à l'impression) -->
+        <div id="tab-roadmap" class="tab-pane absolute inset-0 hidden overflow-hidden p-8 bg-[#fdfbf7] print:hidden">
             <div class="flex flex-col h-full">
                 <div class="mb-4 flex-none border-l-4 border-gray-400 pl-6 py-2 flex justify-between items-end">
                     <div>
@@ -938,7 +1094,7 @@
             if (!container) return;
 
             container.innerHTML = restitutionData.map(pillar => `
-                <div class="mb-14">
+                <div class="mb-14 print-card">
                     <!-- En-tête du Pilier -->
                     <div class="flex items-center gap-4 mb-4 pb-3 border-b-4" style="border-color: ${pillar.hexCode};">
                         <div class="p-3 text-white rounded shadow-sm" style="background-color: ${pillar.hexCode};">
@@ -967,7 +1123,7 @@
                     <!-- Grille des Objectifs -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         ${pillar.objectives.map(obj => `
-                            <div class="bg-white rounded shadow-sm border border-gray-200 flex flex-col h-full hover:shadow-md transition-shadow relative overflow-hidden">
+                            <div class="bg-white rounded shadow-sm border border-gray-200 flex flex-col h-full hover:shadow-md transition-shadow relative overflow-hidden print-card">
                                 <!-- Bande de couleur supérieure -->
                                 <div class="absolute top-0 left-0 w-full h-1" style="background-color: ${pillar.hexCode};"></div>
                                 
@@ -986,7 +1142,7 @@
                                                     Déclinaison Opérationnelle (${obj.actions.length})
                                                 </span>
                                                 ${obj.actions.map(act => `
-                                                    <div class="bg-gray-50 border-l-2 border-[#549e39] p-3 rounded text-sm font-georgia text-dix-dark/80 relative">
+                                                    <div class="bg-gray-50 border-l-2 border-[#549e39] p-3 rounded text-sm font-georgia text-dix-dark/80 relative print-card">
                                                         <p class="leading-relaxed text-[13px]">${act.title}</p>
                                                         ${act.means || act.partners ? `
                                                             <div class="mt-2.5 flex flex-wrap gap-2">
@@ -1181,7 +1337,7 @@
                 "Pas de vocation techniques ou politiques (Ce n’est pas un syndicat / ligne politique particulière)",
                 "Faire émerger des problématiques communes",
                 "Définir des orientations partagées",
-                "Coordonner la mise en œuvre d’actions concrètes réalisées par des acteurs existants",
+                "Coordonner la mise en œuvre d’actions concrètes réalisées par actors existants",
                 "Assurer suivi et cohérence",
                 "Rassembleur / Coordinateur qui s’appuie sur les compétences existentes"
                 ],
@@ -1614,7 +1770,7 @@
 
             const headerHtml = `
                 <div class="max-w-4xl mx-auto space-y-8">
-                    <div class="bg-white p-8 shadow-sm border-l-4 border-[#549e39] relative overflow-hidden">
+                    <div class="bg-white p-8 shadow-sm border-l-4 border-[#549e39] relative overflow-hidden print-card">
                         <div class="flex justify-between items-start relative z-10">
                             <div class="w-full">
                                 <h2 class="text-3xl font-oswald uppercase font-normal text-dix-dark mb-3 leading-tight tracking-wide">${actor.intitule}</h2>
@@ -1646,7 +1802,7 @@
                     </div>
 
                     <!-- BLOC 1: OFFICIEL -->
-                    <div class="bg-white shadow-sm flex flex-col border border-dix-dark/10">
+                    <div class="bg-white shadow-sm flex flex-col border border-dix-dark/10 print-card">
                         <div class="p-4 border-b border-dix-dark/10 bg-[#f3f3f3] flex items-center gap-2">
                             <i data-lucide="book-open" class="w-5 h-5 text-dix-dark"></i>
                             <h3 class="font-oswald uppercase font-normal text-dix-dark tracking-wide">Mission Officielle (Statuts)</h3>
@@ -1689,7 +1845,7 @@
                     </div>
 
                     <!-- BLOC 2: OPERATIONNEL -->
-                    <div class="bg-white shadow-sm flex flex-col relative overflow-hidden border border-[#549e39]/20">
+                    <div class="bg-white shadow-sm flex flex-col relative overflow-hidden border border-[#549e39]/20 print-card">
                         <div class="absolute top-0 left-0 w-1.5 h-full bg-[#549e39]"></div>
                         <div class="p-4 border-b border-[#549e39]/10 bg-[#549e39]/10 flex items-center gap-2">
                             <i data-lucide="file-text" class="w-5 h-5 text-[#549e39]"></i>
@@ -1716,7 +1872,7 @@
                     </div>
 
                     <!-- BLOC 3: ATTENTES -->
-                    <div class="bg-dix-dark text-[#f3f3f3] p-8 shadow-md border-t-4 border-[#549e39]">
+                    <div class="bg-dix-dark text-[#f3f3f3] p-8 shadow-md border-t-4 border-[#549e39] print-card">
                         <div class="flex items-center gap-4 mb-6">
                             <div class="p-2 bg-[#549e39] text-[#f3f3f3]">
                                 <i data-lucide="target" class="w-6 h-6"></i>
@@ -1773,14 +1929,40 @@
             const canvas = document.getElementById('expectationsRadar');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
+            
+            // --- Calcul dynamique des occurrences pour le diagramme ---
+            let tagCounts = {};
+            data.forEach(actor => {
+                if (actor.attentesTags && (!actor.attentes[0] || !actor.attentes[0].includes("ABS"))) {
+                    const uniqueActorTags = [...new Set(actor.attentesTags.flat().filter(Boolean))];
+                    uniqueActorTags.forEach(tag => {
+                        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                    });
+                }
+            });
+
+            // Mapping dynamique vers les étiquettes du graphique
+            const chartData = [
+                tagCounts['COORDINATION'] || 0,
+                tagCounts['GOUVERNANCE'] || 0,
+                tagCounts['OBSERVATOIRE / DONNÉES'] || 0,
+                tagCounts['DÉFENSE '] || 0, // Attention à l'espace final dans la donnée source
+                tagCounts['SANITAIRE'] || 0,
+                tagCounts['PROMOTION'] || 0
+            ];
+            
+            // Ajustement automatique de l'échelle max (minimum 10)
+            const maxVal = Math.max(...chartData);
+            const suggestedMax = maxVal > 10 ? maxVal + 1 : 10;
+
             if (radarChart) radarChart.destroy();
             radarChart = new Chart(ctx, {
                 type: 'radar',
                 data: {
-                    labels: [ 'Coordination', 'Gouvernance', 'Observatoire', 'Défense ', 'Veille Qualité', 'Promotion' ],
+                    labels: [ 'Coordination', 'Gouvernance', 'Observatoire', 'Défense', 'Veille Qualité', 'Promotion' ],
                     datasets: [{
                         label: 'Intensité de la demande',
-                        data: [10, 9, 8, 9, 7, 8],
+                        data: chartData,
                         backgroundColor: 'rgba(180, 83, 9, 0.2)',
                         borderColor: '#B45309',
                         pointBackgroundColor: '#B45309',
@@ -1791,12 +1973,28 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: { 
-                        r: { suggestedMin: 0, suggestedMax: 10, ticks: { display: false },
-                            angleLines: { color: '#E5E7EB' }, grid: { color: '#E5E7EB' },
+                        r: { 
+                            suggestedMin: 0, 
+                            suggestedMax: suggestedMax, 
+                            ticks: { 
+                                display: false,
+                                stepSize: 2
+                            },
+                            angleLines: { color: '#E5E7EB' }, 
+                            grid: { color: '#E5E7EB' },
                             pointLabels: { font: { size: 10, weight: '700', family: 'Oswald' }, color: '#4B5563' }
                         } 
                     },
-                    plugins: { legend: { display: false } }
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.raw + ' acteur(s)';
+                                }
+                            }
+                        }
+                    }
                 }
             });
         }
@@ -1836,7 +2034,7 @@
             });
 
             const summaries = {
-                "INTERPROFESSION": "Rôle de chef de file pour la stratégie globale, la coordination et la défense des s.",
+                "INTERPROFESSION": "Rôle de chef de file pour la strategy globale, la coordination et la défense des s.",
                 "REPRÉSENTATION / SYNDICAT": "Défense du revenu et des intérêts économiques des éleveurs.",
                 "TECHNIQUE / COMMERCE": "Coordination forte et centralisation de l'information (rôle de chef de file).",
                 "PRODUCTEUR / FERMIER": "Besoin de fédération et de cohérence globale, sans ingérence dans l'opérationnel.",
@@ -1853,7 +2051,7 @@
             mainContainer.innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     ${Object.keys(categories).map(cat => `
-                        <div class="space-y-4">
+                        <div class="space-y-4 print-card">
                             <div class="border-b border-[#549e39]/30 pb-2 mb-4">
                                 <h3 class="font-oswald text-xl text-[#549e39]">${cat}</h3>
                                 ${summaries[cat] ? `<p class="text-sm text-dix-dark opacity-70 font-georgia mt-1 italic">"${summaries[cat]}"</p>` : ''}
@@ -1867,7 +2065,7 @@
                                     }
 
                                     return `
-                                        <div class="bg-white rounded p-6 shadow-sm border border-dix-dark/10 flex flex-col h-full ${isAbs ? 'opacity-60 bg-gray-50' : ''}">
+                                        <div class="bg-white rounded p-6 shadow-sm border border-dix-dark/10 flex flex-col h-full print-card ${isAbs ? 'opacity-60 bg-gray-50' : ''}">
                                             <div class="flex items-start justify-between mb-4 border-b border-gray-100 pb-2">
                                                 <h4 class="font-oswald uppercase text-dix-dark text-sm font-medium leading-snug pr-2">${actor.intitule}</h4>
                                                 ${isAbs ? '<span class="text-[10px] font-oswald text-gray-400 border border-gray-200 px-1 rounded">ABS</span>' : ''}
@@ -1912,6 +2110,17 @@
         document.getElementById('filter-member').addEventListener('change', (e) => {
             filterMember = e.target.checked;
             renderList();
+        });
+
+        // Mode d'impression ciblé pour le Bilan (Nouveau)
+        function printRestitutionOnly() {
+            document.body.classList.add('print-only-restitution');
+            window.print();
+        }
+
+        // Nettoyage après impression ciblée
+        window.addEventListener('afterprint', () => {
+            document.body.classList.remove('print-only-restitution');
         });
 
         // Initialize
